@@ -26,10 +26,8 @@ jobs:
       - name: Assemble site
         run: |
           mkdir _site
-          cp -r design/mockups design/tokens.css design/tokens.json _site/ 2>/dev/null || true
           mkdir -p _site/design && cp design/tokens.css design/tokens.json _site/design/
           # mockups import ../tokens.css, so keep the design/ layout
-          rm -rf _site/mockups _site/tokens.css _site/tokens.json
           cp -r design/mockups _site/design/mockups
           cat > _site/index.html <<'HTML'
           <!doctype html>
