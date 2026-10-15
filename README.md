@@ -35,6 +35,7 @@
 - [🚀 Menjalankan Aplikasi](#-menjalankan-aplikasi)
   - [Opsi A: Docker + Cloudflare Tunnel (Satu Perintah, Otomatis)](#opsi-a-docker--cloudflare-tunnel-satu-perintah-otomatis)
   - [Opsi B: Development Lokal (FastAPI + Vite)](#opsi-b-development-lokal-fastapi--vite)
+  - [Opsi C: Deploy Publik di Render](#opsi-c-deploy-publik-di-render-gratis-link-tetap)
 - [👥 Akun Demo Siap Pakai](#-akun-demo-siap-pakai)
 - [🧪 Menjalankan Pengujian (Testing)](#-menjalankan-pengujian-testing)
 - [📁 Struktur Repositori](#-struktur-repositori)
@@ -271,6 +272,15 @@ Skrip akan secara otomatis:
    - Dokumentasi Swagger API: `http://localhost:8000/docs`
 
 ---
+
+### Opsi C: Deploy Publik di Render (Gratis, Link Tetap)
+
+1. Buat database PostgreSQL gratis di [Neon](https://neon.tech) atau [Supabase](https://supabase.com), lalu salin connection string-nya.
+2. Di [Render](https://render.com): **New + → Blueprint** → pilih repo ini (konfigurasi ada di [`render.yaml`](render.yaml)).
+3. Isi `GNOSIA_DATABASE_URL` dengan connection string dari langkah 1, lalu **Apply**.
+4. Tunggu build selesai. Aplikasi hidup di `https://gnosia.onrender.com` (atau nama yang diberikan Render). Password akun demo ada di Environment → `GNOSIA_DEMO_PASSWORD`.
+
+> Paket gratis Render tidur setelah 15 menit tanpa akses, jadi buka pertama setelah idle butuh ~1 menit.
 
 ## 👥 Akun Demo Siap Pakai
 

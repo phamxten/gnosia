@@ -1,0 +1,17 @@
+# One-click deploy on Render: New + > Blueprint > pick this repo.
+# The app is the Dockerfile in the repo root (FastAPI serves the API, WebSocket and the built React app).
+services:
+  - type: web
+    name: gnosia
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: GNOSIA_DATABASE_URL
+        sync: false # paste your PostgreSQL connection string (Neon / Supabase / Render Postgres)
+      - key: GNOSIA_SECRET_KEY
+        generateValue: true
+      - key: GNOSIA_DEMO_PASSWORD
+        generateValue: true # shared password of the demo accounts; see it in the Render dashboard
+      - key: GNOSIA_COOKIE_SECURE
+        value: "true"

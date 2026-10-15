@@ -3,6 +3,7 @@
 import shutil
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +38,15 @@ class Settings(BaseSettings):
     runner_timeout_ms: int = 1000
 
     frontend_dist: Path = ROOT_DIR / "frontend" / "dist"
+
+    @field_validator("database_url")
+    @classmethod
+    def _psycopg_url(cls, v: str) -> str:
+        # Hosted Postgres (Neon, Supabase, Render) hands out postgres:// or postgresql:// URLs; SQLAlchemy needs the psycopg driver.
+        for prefix in ("postgres://", "postgresql://"):
+            if v.startswith(prefix):
+                return "postgresql+psycopg://" + v[len(prefix):]
+        return v
 
 
 settings = Settings()
