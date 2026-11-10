@@ -29,7 +29,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      GNOSIA_DATABASE_URL: postgresql+psycopg://gnosia:${POSTGRES_PASSWORD}@db:5432/gnosia
+      GNOSIA_DATABASE_URL: postgresql://gnosia:${POSTGRES_PASSWORD}@db:5432/gnosia
       GNOSIA_SECRET_KEY: ${SECRET_KEY:?isi SECRET_KEY di file .env}
       GNOSIA_DEMO_PASSWORD: ${DEMO_PASSWORD:-}
       # cookies only over HTTPS (the tunnel) — browsers still accept them on http://localhost

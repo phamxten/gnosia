@@ -56,7 +56,7 @@ Values are Paper / Ink.
 - Right/wrong is never shown by colour alone: always add an icon (check / rotate-ccw / x) and text.
 - Project accent (slate teal): `--mode-project` `#2F6773` / `#7FB8C2`.
 
-### 3.3 Contrast (verified by `python3 scripts/contrast.py`)
+### 3.3 Contrast (verified by `node scripts/contrast.mjs`)
 All 94 checked pairs pass in both themes. The script covers:
 - text on bg/surface/sunken: ≥ 4.5
 - faint meta: ≥ 3
@@ -195,7 +195,7 @@ Implementation: **CodeMirror 6** with a custom `EditorView.theme` + `HighlightSt
 
 ## 11. Pre-delivery checklist
 
-- [ ] Colours only via tokens; `python3 scripts/contrast.py` passes.
+- [ ] Colours only via tokens; `node scripts/contrast.mjs` passes.
 - [ ] Every screen tested in Paper and Ink, at 1440 and 390 wide.
 - [ ] Keyboard:
   - [ ] Enter = check/next

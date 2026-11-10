@@ -1,15 +1,13 @@
 # keep the build context small and never bake secrets into the image
 **/node_modules
-**/.venv
-**/__pycache__
-**/.pytest_cache
 frontend/dist
-backend/.env
-backend/*.db
-backend/*.db-*
 .env
 .env.*
 !.env.example
 design/
 .claude/
 *.log
+backend/gnosia.db
+backend-node/dist
+backend-node/data
+backend-node/.env

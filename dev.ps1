@@ -1,30 +1,27 @@
-# GNOSIA — run the backend (FastAPI :8000) and the frontend (Vite :5173) together for development.
+# GNOSIA — run the backend (Node.js :8000) and the frontend (Vite :5173) together for development.
 #   .\dev.ps1            start both (Ctrl+C stops both)
-#   .\dev.ps1 -Setup     first run: create the Python venv, install packages, prepare PostgreSQL and seed demo data
+#   .\dev.ps1 -Setup     first run: install packages and seed the demo data
 #   .\dev.ps1 -Reseed    wipe the database and seed the demo data again
+# Without GNOSIA_DATABASE_URL (see backend-node\.env.example) the backend uses an embedded PostgreSQL stored in backend-node\data.
 param([switch]$Setup, [switch]$Reseed)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$backend = Join-Path $root 'backend'
+$backend = Join-Path $root 'backend-node'
 $frontend = Join-Path $root 'frontend'
-$py = Join-Path $backend '.venv\Scripts\python.exe'
 $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
 
 if ($Setup) {
-  if (-not (Test-Path $py)) { python -m venv (Join-Path $backend '.venv') }
-  & $py -m pip install --quiet --upgrade pip
-  & $py -m pip install --quiet -r (Join-Path $backend 'requirements.txt')
-  if (-not (Test-Path (Join-Path $backend '.env'))) { Write-Warning 'backend\.env belum ada. Salin backend\.env.example lalu isi GNOSIA_DATABASE_URL.'; exit 1 }
-  Push-Location $backend; & $py scripts/setup_postgres.py; & $py -m app.seed; Pop-Location
+  Push-Location $backend; npm install --no-audit --no-fund; npm run seed; Pop-Location
   Push-Location $frontend; npm install --no-audit --no-fund; Pop-Location
 }
-if ($Reseed) { Push-Location $backend; & $py -m app.seed --reset; Pop-Location }
+if ($Reseed) { Push-Location $backend; npm run seed -- --reset; Pop-Location }
 
-$api = Start-Process -FilePath $py -ArgumentList @('-m', 'uvicorn', 'app.main:app', '--reload', '--port', '8000') -WorkingDirectory $backend -PassThru -NoNewWindow
+$api = Start-Process -FilePath 'npm.cmd' -ArgumentList @('run', 'dev') -WorkingDirectory $backend -PassThru -NoNewWindow
 try {
   Push-Location $frontend
   npx vite --port 5173
 } finally {
   Pop-Location
-  if ($api -and -not $api.HasExited) { Stop-Process -Id $api.Id -Force }
+  # npm starts node as a child process: /T also stops the children
+  if ($api -and -not $api.HasExited) { taskkill /PID $api.Id /T /F | Out-Null }
 }

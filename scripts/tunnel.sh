@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # GNOSIA · Cloudflare quick tunnel (Docker) — Linux / macOS / WSL / Git Bash
 #
-# Menjalankan aplikasi (FastAPI + React + PostgreSQL) di Docker lalu membuka URL publik sementara
+# Menjalankan aplikasi (Node.js + React + PostgreSQL) di Docker lalu membuka URL publik sementara
 # https://<acak>.trycloudflare.com lewat Cloudflare. Tidak perlu akun Cloudflare.
 #
 # Pemakaian (dari folder proyek):

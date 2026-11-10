@@ -1,0 +1,10 @@
+{
+  "name": "gnosia",
+  "private": true,
+  "description": "Scripts at the repository root for hosts that build and start one Node.js app (e.g. Hostinger). Docker uses ./Dockerfile instead.",
+  "scripts": {
+    "build": "npm --prefix frontend ci --include=dev && npm --prefix frontend run build && npm --prefix backend-node ci --include=dev && npm --prefix backend-node run build",
+    "start": "node backend-node/dist/start.js"
+  },
+  "engines": { "node": ">=22" }
+}

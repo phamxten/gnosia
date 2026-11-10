@@ -10,7 +10,7 @@
   <a href="#-filosofi--cara-belajar"><img src="https://img.shields.io/badge/Pedagogi-4_Fase_Kognitif-2B5EA7?style=for-the-badge" alt="4 Fase Kognitif" /></a>
   <a href="#-maskot-kami-nosi-"><img src="https://img.shields.io/badge/Maskot-Nosi_{_}-8B5CF6?style=for-the-badge" alt="Nosi Mascot" /></a>
   <a href="#-arsitektur--teknologi"><img src="https://img.shields.io/badge/Frontend-React_19_·_TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" /></a>
-  <a href="#-arsitektur--teknologi"><img src="https://img.shields.io/badge/Backend-FastAPI_·_Python-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" /></a>
+  <a href="#-arsitektur--teknologi"><img src="https://img.shields.io/badge/Backend-Fastify_·_Node.js-000000?style=for-the-badge&logo=fastify&logoColor=white" alt="Fastify" /></a>
   <a href="#-arsitektur--teknologi"><img src="https://img.shields.io/badge/Database-PostgreSQL_15+-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
   <a href="#-menjalankan-aplikasi"><img src="https://img.shields.io/badge/Deploy-Docker_·_Cloudflare-F38020?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License MIT" /></a>
@@ -34,7 +34,7 @@
 - [⚙️ Arsitektur & Teknologi](#️-arsitektur--teknologi)
 - [🚀 Menjalankan Aplikasi](#-menjalankan-aplikasi)
   - [Opsi A: Docker + Cloudflare Tunnel (Satu Perintah, Otomatis)](#opsi-a-docker--cloudflare-tunnel-satu-perintah-otomatis)
-  - [Opsi B: Development Lokal (FastAPI + Vite)](#opsi-b-development-lokal-fastapi--vite)
+  - [Opsi B: Development Lokal (Fastify + Vite)](#opsi-b-development-lokal-fastify--vite)
   - [Opsi C: Deploy Publik di Render](#opsi-c-deploy-publik-di-render-gratis-link-tetap)
 - [👥 Akun Demo Siap Pakai](#-akun-demo-siap-pakai)
 - [🧪 Menjalankan Pengujian (Testing)](#-menjalankan-pengujian-testing)
@@ -184,10 +184,11 @@ gnosia/
 │   ├── src/code/         # Integrasi CodeMirror 6 & syntax highlighting
 │   ├── src/mentor/       # Dashboard & Cockpit Mentor
 │   └── src/admin/        # Manajemen Kurikulum & Builder
-├── backend/              # Web API & Server Aplikasi
-│   ├── app/routers/      # Endpoint Auth, Learner, Mentor, Admin, Workspace
-│   ├── app/services/     # Sinyal kesulitan, evaluator kode, kalkulator streak
-│   ├── app/seed/         # Kurikulum bawaan (Bab 1: Halo, Bab 2: Variabel, dsb)
+├── backend-node/         # Web API & Server Aplikasi (Node.js + TypeScript)
+│   ├── src/routers/      # Endpoint Auth, Learner, Player, Mentor, Admin, Workspace
+│   ├── src/services/     # Sinyal kesulitan, evaluator kode, kalkulator streak
+│   ├── src/seed/         # Kurikulum bawaan (Bab 1: Halo, Bab 2: Variabel, dsb)
+│   ├── test/             # Pengujian alur end-to-end (node:test)
 │   └── runner/           # Sandbox runner Node.js (node:vm aman)
 ├── design/               # Spesifikasi desain, token CSS/JSON, & tangkapan layar
 │   ├── shots/            # High-res screenshots 1440px & mobile 390px
@@ -201,8 +202,8 @@ gnosia/
 | **Frontend** | React 19, TypeScript, Vite | Komponen modern, rendering ultra cepat |
 | **State & Data** | TanStack Query (React Query) | Sinkronisasi data server & cache otomatis |
 | **Code Editor** | CodeMirror 6 | Editor kelas profesional dengan autocomplete JavaScript |
-| **Backend API** | FastAPI, Python 3.12+ | Asynchronous REST API berkecepatan tinggi |
-| **Database** | PostgreSQL 15+ / SQLite | Relational ORM via SQLAlchemy 2.0 |
+| **Backend API** | Fastify, Node.js 22+, TypeScript | REST API + WebSocket berkecepatan tinggi |
+| **Database** | PostgreSQL 15+ (PGlite tertanam untuk dev) | Query type-safe via Drizzle ORM |
 | **Code Sandbox** | Node.js (`node:vm`) | Isolasi eksekusi kode siswa dengan limit memori & timeout |
 | **DevOps** | Docker, Docker Compose, Cloudflare | Siap kontainer & tunnel instan tanpa IP publik |
 
@@ -239,48 +240,34 @@ Skrip akan secara otomatis:
 
 ---
 
-### Opsi B: Development Lokal (FastAPI + Vite)
+### Opsi B: Development Lokal (Fastify + Vite)
 
-**Kebutuhan Sistem:** Python 3.12+, Node.js 20+, PostgreSQL 15+ (atau SQLite).
+**Kebutuhan Sistem:** Node.js 22+. Database server tidak wajib: tanpa `GNOSIA_DATABASE_URL`, backend memakai PostgreSQL tertanam (PGlite) yang disimpan di `backend-node/data`.
 
-1. **Salin environment backend:**
+1. **(Opsional) Pakai PostgreSQL sendiri:**
    ```bash
-   cp backend/.env.example backend/.env
+   cp backend-node/.env.example backend-node/.env
    ```
-2. **Jalankan script dev otomatis (Windows):**
-   ```powershell
-   .\dev.ps1 -Setup
-   .\dev.ps1
+2. **Jalankan semuanya (Linux/macOS):**
+   ```bash
+   ./start.sh
    ```
-   *Atau secara manual (macOS/Linux):*
+   *Atau manual, di dua terminal:*
    ```bash
    # Terminal 1: Backend
-   cd backend
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   python3 -m app.seed
-   uvicorn app.main:app --reload --port 8000
+   cd backend-node
+   npm install
+   npm run seed        # isi data demo (aman diulang, --reset untuk mulai dari nol)
+   npm run dev         # http://localhost:8000
 
    # Terminal 2: Frontend
    cd frontend
    npm install
-   npm run dev
+   npm run dev         # http://localhost:5173
    ```
-3. **Buka browser:**
-   - Aplikasi: `http://localhost:5173`
-   - Dokumentasi Swagger API: `http://localhost:8000/docs`
+3. **Buka browser:** `http://localhost:5173`
 
----
-
-### Opsi C: Deploy Publik di Render (Gratis, Link Tetap)
-
-1. Buat database PostgreSQL gratis di [Neon](https://neon.tech) atau [Supabase](https://supabase.com), lalu salin connection string-nya.
-2. Di [Render](https://render.com): **New + → Blueprint** → pilih repo ini (konfigurasi ada di [`render.yaml`](render.yaml)).
-3. Isi `GNOSIA_DATABASE_URL` dengan connection string dari langkah 1, lalu **Apply**.
-4. Tunggu build selesai. Aplikasi hidup di `https://gnosia.onrender.com` (atau nama yang diberikan Render). Password akun demo ada di Environment → `GNOSIA_DEMO_PASSWORD`.
-
-> Paket gratis Render tidur setelah 15 menit tanpa akses, jadi buka pertama setelah idle butuh ~1 menit.
+> Di Windows, `.\dev.ps1 -Setup` lalu `.\dev.ps1` menjalankan hal yang sama.
 
 ## 👥 Akun Demo Siap Pakai
 
@@ -301,9 +288,11 @@ Semua akun demo di lingkungan lokal menggunakan kata sandi: `gnosia123` *(pada D
 ## 🧪 Menjalankan Pengujian (Testing)
 
 ```bash
-# Pengujian Backend (Pytest)
-cd backend
-python -m pytest -q
+# Pengujian Backend (node:test, database sementara di memori)
+cd backend-node
+npm test
+# Opsional: jalankan terhadap PostgreSQL asli (database ini DIRESET!)
+# GNOSIA_TEST_DATABASE_URL=postgresql://user:pw@localhost:5432/gnosia_test npm test
 
 # Validasi Tipe Frontend (TypeScript)
 cd frontend
@@ -316,7 +305,7 @@ npm run typecheck
 
 ```
 ├── .github/              # Alur CI/CD GitHub Actions
-├── backend/              # Server FastAPI, seed data, & sandbox runner
+├── backend-node/         # Server Fastify (Node.js + TypeScript), seed data, & sandbox runner
 ├── design/               # Design token, spesifikasi layar, & aset tangkapan layar
 │   └── shots/            # Tangkapan layar antarmuka GNOSIA
 ├── docs/                 # Aset dokumentasi & vektor SVG maskot
@@ -324,7 +313,7 @@ npm run typecheck
 ├── frontend/             # Kode sumber React 19 + TypeScript
 ├── scripts/              # Skrip tunnel Cloudflare & utilitas database
 ├── docker-compose.yml    # Konfigurasi containerization multi-service
-├── Dockerfile            # Multi-stage Docker build frontend + backend
+├── Dockerfile            # Multi-stage Docker build frontend + backend Node.js
 ├── dev.ps1               # Runner praktis satu perintah dev
 ├── LICENSE               # Lisensi MIT
 └── README.md             # Dokumentasi utama proyek

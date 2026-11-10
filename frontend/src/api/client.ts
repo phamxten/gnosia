@@ -1,4 +1,4 @@
-/* Thin fetch wrapper for the FastAPI backend. Errors carry the server's `detail`
+/* Thin fetch wrapper for the backend API. Errors carry the server's `detail`
    (a string, or {code, message, detail, redirect, fields, problems}). */
 export type Detail = string | {
   code?: string; message?: string; detail?: string; redirect?: string;

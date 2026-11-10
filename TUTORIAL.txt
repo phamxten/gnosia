@@ -1,0 +1,53 @@
+TUTORIAL SINGKAT GNOSIA
+=======================
+
+1. JALANKAN DI LAPTOP
+---------------------
+    cd /home/qhumy/Documents/gnosia
+    ./start.sh
+
+Buka http://localhost:5173
+Login: nadia@smksig.sch.id / gnosia123  (akun lain: sekar@ admin, dimas@ mentor,
+alex@ rizky@ maya@ bayu@ salsa@ siswa, semuanya @smksig.sch.id, sandi sama)
+Matikan: Ctrl+C
+Kebutuhan: Node.js 22+ (cek: node -v)
+
+
+2. JALANKAN DENGAN DOCKER
+-------------------------
+Buat file .env berisi:
+    POSTGRES_PASSWORD=teks-acak
+    SECRET_KEY=teks-acak-panjang
+    COOKIE_SECURE=false
+
+Lalu:
+    docker compose up -d --build
+
+Buka http://localhost:8000
+
+
+3. DEPLOY KE HOSTINGER
+----------------------
+Paket VPS (paling aman):
+    git clone https://github.com/phamxten/gnosia.git && cd gnosia
+    cp .env.example .env     (isi POSTGRES_PASSWORD, SECRET_KEY, DEMO_PASSWORD,
+                              COOKIE_SECURE=true)
+    docker compose up -d --build
+  Arahkan subdomain ke IP VPS (hPanel > DNS Zone > record A).
+
+Paket Business/Cloud (Node.js web app):
+  hPanel > Websites > Add Website > Node.js web app > hubungkan GitHub.
+    Build command : npm run build
+    Entry file    : backend-node/dist/start.js
+    Node.js       : 22
+    Env variables : GNOSIA_DATABASE_URL (dari Neon/Supabase), GNOSIA_SECRET_KEY,
+                    GNOSIA_DEMO_PASSWORD, GNOSIA_COOKIE_SECURE=true,
+                    GNOSIA_HOST=0.0.0.0
+  Uji setelah deploy: Bab 1 > Uji > Challenge > "Jalankan tes".
+  Kalau muncul "Runner gagal", pindah ke VPS.
+
+
+4. SEBELUM DIBUKA UNTUK UMUM
+----------------------------
+- Ganti sandi demo (DEMO_PASSWORD) dan SECRET_KEY dengan teks acak.
+- Pakai HTTPS. Jangan commit file .env.
