@@ -7,7 +7,7 @@
   review     challenge / project submitted                "Salsa minta review · Challenge Rapor"
 */
 import { all, asc, Db, eq, first, get as getRow, isIn, sql, T, where } from '../db.ts';
-import { cut, first as firstWord, get, isInt, type Json, mostCommon, or, pyRound, pyStr, repr, sortBy, truthy } from '../py.ts';
+import { cut, first as firstWord, get, isInt, type Json, mostCommon, or, roundHalfEven, toStr, repr, sortBy, truthy } from '../util.ts';
 import type { Attempt, Chapter, HintOpen, User } from '../schema.ts';
 import * as content_svc from './content.ts';
 import * as unlock from './unlock.ts';
@@ -128,7 +128,7 @@ export async function learnerSignals(db: Db, learner: User, cache: Cache = new M
     let where_ = unlock.PHASE_LABEL[cur];
     if (cur === 'pahami') {
       const st = await first(db, T.player_states, where(eq(T.player_states.user_id, learner.id), eq(T.player_states.chapter_id, p.chapter_id), eq(T.player_states.phase, 'pahami')));
-      if (st && truthy(get(st.data, 'scene'))) where_ += ` · scene ${pyStr(st.data.scene)}`;
+      if (st && truthy(get(st.data, 'scene'))) where_ += ` · scene ${toStr(st.data.scene)}`;
     }
     out.push({
       kind: 'stalled', phase: cur, count: days, at: since,
@@ -176,7 +176,7 @@ export async function phaseFunnel(db: Db, learnerIds: number[], chapterId: numbe
   let pile: Json = null;
   for (const [ph, n] of Object.entries(counts)) {
     const avg = durations[ph].length ? durations[ph].reduce((a, b) => a + b, 0) / durations[ph].length : 0;
-    if (total && n / total > 0.4 && avg > median) pile = { phase: ph, count: n, avg_days: pyRound(avg, 1) };
+    if (total && n / total > 0.4 && avg > median) pile = { phase: ph, count: n, avg_days: roundHalfEven(avg, 1) };
   }
   return { counts, total, pile };
 }
@@ -195,7 +195,7 @@ export async function hardestConcepts(db: Db, learnerIds: number[], pathId: numb
       if (!a.correct) t[0] += 1;
     }
   }
-  const rows = [...tally].filter(([, [, n]]) => n >= 3).map(([k, [w, n]]) => ({ key: k, name: conceptNames.get(k) ?? k, pct: pyRound((100 * w) / n) }));
+  const rows = [...tally].filter(([, [, n]]) => n >= 3).map(([k, [w, n]]) => ({ key: k, name: conceptNames.get(k) ?? k, pct: roundHalfEven((100 * w) / n) }));
   return sortBy(rows, r => [-r.pct]).slice(0, limit);
 }
 
@@ -224,11 +224,11 @@ export async function wrongPatterns(db: Db, learner: User, limit = 5): Promise<J
       same: new Set(atts.map(a => repr(a.answer))).size === 1, diagnosis: get(item, 'diagnosis', ''),
     };
     if (phase === 'perkuat' && get(item, 'type') === 'parsons') {
-      const lines = new Map(get(item, 'lines', []).map((l: Json) => [pyStr(l.id), l.code]));
+      const lines = new Map(get(item, 'lines', []).map((l: Json) => [toStr(l.id), l.code]));
       const answer: Json[] = get(item, 'answer', []);
-      entry.correct_lines = answer.map(i => lines.get(pyStr(i)) ?? '');
+      entry.correct_lines = answer.map(i => lines.get(toStr(i)) ?? '');
       entry.wrong_lines = (or(last.answer, []) as Json[]).map((i, n) => ({
-        code: lines.get(pyStr(i)) ?? '', bad: n < answer.length ? pyStr(i) !== pyStr(answer[n]) : true,
+        code: lines.get(toStr(i)) ?? '', bad: n < answer.length ? toStr(i) !== toStr(answer[n]) : true,
       }));
     } else if (phase === 'perkuat' && get(item, 'type') === 'bug') {
       entry.correct_lines = get(item, 'lines', []);

@@ -16,7 +16,7 @@
     }
 */
 import { Db, eq, first, T, where } from '../db.ts';
-import { asInt, clone as deepClone, deepEqual, get, type Json, or, pyList, pyStr, truthy } from '../py.ts';
+import { asInt, clone as deepClone, deepEqual, get, type Json, or, toList, toStr, truthy } from '../util.ts';
 import type { Chapter } from '../schema.ts';
 
 export async function published(db: Db, chapter: Chapter, version: number | null = null): Promise<Json | null> {
@@ -81,22 +81,22 @@ export function checkPerkuat(item: Json, answer: Json): [boolean, Json] {
     return [ok, { picked: asInt(answer), ok }];
   }
   if (t === 'fill') {
-    const got = pyList(or(answer, []));
-    const marks = pyList(key).map((exp, i) => i < got.length && deepEqual(got[i], exp));
-    return [marks.every(Boolean) && got.length === pyList(key).length, marks];
+    const got = toList(or(answer, []));
+    const marks = toList(key).map((exp, i) => i < got.length && deepEqual(got[i], exp));
+    return [marks.every(Boolean) && got.length === toList(key).length, marks];
   }
   if (t === 'parsons') {
-    const got = pyList(or(answer, [])).map(pyStr);
-    const k = pyList(key);
-    const marks = got.map((g, i) => i < k.length && g === pyStr(k[i]));
-    return [deepEqual(got, k.map(pyStr)), marks];
+    const got = toList(or(answer, [])).map(toStr);
+    const k = toList(key);
+    const marks = got.map((g, i) => i < k.length && g === toStr(k[i]));
+    return [deepEqual(got, k.map(toStr)), marks];
   }
   if (t === 'slider') {
     const ok = asInt(answer) === key;
     return [ok, { ok }];
   }
   if (t === 'match') {
-    const pairs = pyList(or(answer, []));
+    const pairs = toList(or(answer, []));
     const left = new Set(get(item, 'left', []).map((p: Json) => JSON.stringify(p.key)));
     const ok = pairs.length === left.size && pairs.every(p => Array.isArray(p) && p.length === 2 && deepEqual(p[0], p[1]));
     return [ok, { ok }];
@@ -109,7 +109,7 @@ export function checkExamStatic(q: Json, answer: Json): boolean | null {
   if (answer === null || answer === undefined || answer === '') return false;
   if (q.type === 'choice') return asInt(answer) === get(q, 'answer');
   if (q.type === 'short') {
-    const norm = pyStr(answer).trim().replace(/;+$/, '').trim().toLowerCase();
+    const norm = toStr(answer).trim().replace(/;+$/, '').trim().toLowerCase();
     return get(q, 'accept', []).map((a: string) => a.toLowerCase()).includes(norm);
   }
   return null;

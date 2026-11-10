@@ -11,7 +11,7 @@ await run(true);
 const app = await buildApp();
 export const PASSWORD = 'gnosia123';
 
-/** A tiny HTTP client with a cookie jar, like fastapi.testclient.TestClient. */
+/** A tiny HTTP client with a cookie jar. */
 export class Client {
   cookies = new Map<string, string>();
   async request(method: string, url: string, body?: unknown) {

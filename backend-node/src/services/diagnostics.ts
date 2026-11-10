@@ -1,10 +1,10 @@
 /* Rule-based diagnostics: turns a deterministic error (L1) into a plain-language explanation (L2)
    and, where it is safe, a one-click fix. Never a chatbot (CONCEPT §4). Unknown errors return
    `available: false` so the UI shows "Penjelasan belum tersedia" while the raw error (L1) stays visible. */
-import { B, escapeHtml, get, type Json, reEscape, W } from '../py.ts';
+import { B, escapeHtml, get, type Json, reEscape, W } from '../util.ts';
 
 const CONSOLE_METHODS = ['log', 'error', 'warn'];
-const NAME = `[A-Za-z_$](?:${W}|\\$)*`; // [A-Za-z_$][\w$]* with Python's Unicode \w
+const NAME = `[A-Za-z_$](?:${W}|\\$)*`; // [A-Za-z_$][\w$]* with a Unicode-aware \w
 
 const m = (s: string) => `<span class="t-mono">${escapeHtml(s)}</span>`;
 const re = (src: string, flags = '') => new RegExp(src, `u${flags}`);

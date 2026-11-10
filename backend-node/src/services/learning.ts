@@ -1,6 +1,6 @@
 /* Learner progress across chapters: unlocking, phase completion, XP and mastery. */
 import { all, asc, Db, eq, first, get as getRow, insert, isIn, save, sql, T, where } from '../db.ts';
-import { get, type Json, or, pyInt, pyRound, sum } from '../py.ts';
+import { get, type Json, or, toInt, roundHalfEven, sum } from '../util.ts';
 import type { Chapter, ChapterProgress, Concept, ConceptMastery, PlayerState, User } from '../schema.ts';
 import * as activity from './activity.ts';
 import * as content_svc from './content.ts';
@@ -97,7 +97,7 @@ export async function completePhase(db: Db, user: User, chapter: Chapter, phase:
   const p = await ensureProgress(db, user, chapter);
   const already = p.phases[phase].state === 'done';
   const patch: Partial<ChapterProgress> = {};
-  patch.phases = phase === 'kuis' ? unlock.recordKuis(p.phases, pyInt(score || 0))[0] : unlock.complete(p.phases, phase, score);
+  patch.phases = phase === 'kuis' ? unlock.recordKuis(p.phases, toInt(score || 0))[0] : unlock.complete(p.phases, phase, score);
   await save(db, T.chapter_progress, p, patch);
   let xp = 0;
   const content = or(await content_svc.published(db, chapter, p.version), {});
@@ -181,7 +181,7 @@ export async function chapterMasteryPct(db: Db, user: User, chapter: Chapter, ke
   if (!cs.length) return 0;
   const rows = new Map((await all(db, T.concept_mastery, where(eq(T.concept_mastery.user_id, user.id), isIn(T.concept_mastery.concept_id, cs.map(c => c.id)))))
     .map(r => [r.concept_id, r]));
-  return pyRound((100 * sum(cs.map(c => rows.get(c.id)?.tier ?? 0))) / (5 * cs.length));
+  return roundHalfEven((100 * sum(cs.map(c => rows.get(c.id)?.tier ?? 0))) / (5 * cs.length));
 }
 
 /** Average mastery over the concepts of every chapter the learner has started. */
@@ -191,7 +191,7 @@ export async function overallMasteryPct(db: Db, user: User, pathId: number): Pro
   const cs = await all(db, T.concepts, where(eq(T.concepts.path_id, pathId), isIn(T.concepts.chapter_id, started)));
   if (!cs.length) return 0;
   const rows = new Map((await all(db, T.concept_mastery, eq(T.concept_mastery.user_id, user.id))).map(r => [r.concept_id, r.tier]));
-  return pyRound((100 * sum(cs.map(c => rows.get(c.id) ?? 0))) / (5 * cs.length));
+  return roundHalfEven((100 * sum(cs.map(c => rows.get(c.id) ?? 0))) / (5 * cs.length));
 }
 
 export async function snapshotMastery(db: Db, user: User, pathId: number): Promise<void> {

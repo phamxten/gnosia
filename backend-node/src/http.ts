@@ -1,6 +1,6 @@
 /* HTTPException and request-body schemas.
    Bodies are validated with Fastify's JSON Schema (Ajv: coerces "3" to 3 and fills defaults, like
-   pydantic's lax mode); a failure answers 422 with a FastAPI-style `detail` list. */
+   a lax parser); a failure answers 422 with a `detail` list. */
 
 export class HttpError extends Error {
   constructor(public status: number, public detail: unknown) {
@@ -26,7 +26,7 @@ export const oneOf = (values: (string | number)[], extra: S = {}): S => ({ type:
 /** `x: T | None = None` */
 export const optional = (s: S): S => ({ ...nullable(s), default: null });
 
-/** A pydantic model: fields without a `default` are required. */
+/** A request body model: fields without a `default` are required. */
 export function model(fields: Record<string, S>): S {
   return {
     type: 'object',

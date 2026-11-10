@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { all, type Db, dropAll, eq, first, initDb, insert, save, T, where, withDb } from '../db.ts';
-import { clone, type Json, pyRound } from '../py.ts';
+import { clone, type Json, roundHalfEven } from '../util.ts';
 import type { Chapter, Concept, Klass, Organization, Project, User } from '../schema.ts';
 import { hashPassword } from '../security.ts';
 import * as activity from '../services/activity.ts';
@@ -167,7 +167,7 @@ class Seeder {
       this.kuisSeen.set(k, n);
       await this.attempt(u, slug, 'kuis', qid, ok, seconds(when, 8 * i), { n, answer: choice, ms: (20 - left) * 1000 });
     }
-    const pct = pyRound((100 * answers.filter(a => a.correct).length) / answers.length);
+    const pct = roundHalfEven((100 * answers.filter(a => a.correct).length) / answers.length);
     return insert(this.db, T.quiz_rounds, {
       user_id: u.id, chapter_id: this.ch[slug].id, kind, version: this.ch[slug].version, question_refs: ids.map(qid => [this.ch[slug].id, qid]),
       answers, score, combo, best_combo: best, finished: true, pct, passed: pct >= 70, created_at: when,
@@ -320,7 +320,7 @@ async function finishBab1(s: Seeder, u: User, startDays: number, mentor: User | 
   await s.state(u, 'halo', 'perkuat', d, plus(t0, { minutes: 16 }));
   await s.xp(u, 75, 'perkuat selesai · Halo, JavaScript', plus(t0, { minutes: 16 }));
   const first_ = d.order.filter((i: string) => !d.inserted.includes(i) && d.first_try[i]).length;
-  const acc = pyRound((100 * first_) / 7);
+  const acc = roundHalfEven((100 * first_) / 7);
   const r = await s.kuisRound(u, 'halo', o.kuis_wrong ?? [], plus(t0, { days: 1 }));
   await s.xp(u, Math.floor(r.score / 20), 'Kuis · Halo, JavaScript', plus(t0, { days: 1 }));
   await s.xp(u, 60, 'kuis selesai · Halo, JavaScript', plus(t0, { days: 1 }));
@@ -456,7 +456,7 @@ async function storyBayu(s: Seeder, u: User) {
   await finishBab1(s, u, 25, null, { kuis_wrong: ['h4', 'h12', 'h17'], perkuat_wrong: { b3: 2, b5: 1 } });
   const start = ago({ days: 7 });
   await s.state(u, 'variabel', 'pahami', { scene: 4, max_scene: 4 }, ago({ days: 5, hours: 2 }));
-  await s.progress(u, 'variabel', null, { current_progress: pyRound(3 / 7, 3), started: start, since: start, updated: ago({ days: 5, hours: 2 }), active_min: 9 });
+  await s.progress(u, 'variabel', null, { current_progress: roundHalfEven(3 / 7, 3), started: start, since: start, updated: ago({ days: 5, hours: 2 }), active_min: 9 });
   for (const k of ['let', 'assign']) await s.mastery(u, k, 1);
   for (const day of [5, 7, 8, 11]) await s.minutes(u, day, rng.randint(8, 22));
 }
@@ -554,7 +554,7 @@ async function genericClass(s: Seeder, klass: Klass, n: number, pw: string, org:
     }
     const d = await s.perkuatRun(u, 'variabel', 8, plus(start, { days: 1 }), wrong);
     await s.state(u, 'variabel', 'perkuat', d, plus(start, { days: 1 }));
-    const acc = pyRound((100 * Object.keys(d.first_try).filter(i => d.first_try[i] && !d.inserted.includes(i)).length) / 8);
+    const acc = roundHalfEven((100 * Object.keys(d.first_try).filter(i => d.first_try[i] && !d.inserted.includes(i)).length) / 8);
     await s.xp(u, 75, 'perkuat selesai · Variabel', plus(start, { days: 1 }));
     const misses = Object.entries(KUIS_WRONG).filter(([, p]) => rng.random() < p).map(([k]) => k).slice(0, 3);
     const rounds: Json[] = [];

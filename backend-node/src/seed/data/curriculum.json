@@ -1,0 +1,597 @@
+{
+ "concepts": [
+  [
+   "consolelog",
+   "console.log",
+   "Menampilkan output",
+   "halo",
+   120,
+   110,
+   []
+  ],
+  [
+   "komentar",
+   "komentar",
+   "Menulis komentar",
+   "halo",
+   220,
+   220,
+   [
+    "consolelog"
+   ]
+  ],
+  [
+   "urutan",
+   "urutan",
+   "Urutan perintah",
+   "halo",
+   110,
+   330,
+   [
+    "consolelog"
+   ]
+  ],
+  [
+   "let",
+   "let",
+   "Membuat variabel",
+   "variabel",
+   360,
+   120,
+   [
+    "consolelog"
+   ]
+  ],
+  [
+   "assign",
+   "operator =",
+   "Mengganti nilai",
+   "variabel",
+   520,
+   380,
+   [
+    "penamaan"
+   ]
+  ],
+  [
+   "const",
+   "const",
+   "let vs const",
+   "variabel",
+   430,
+   250,
+   [
+    "let"
+   ]
+  ],
+  [
+   "hitung",
+   "hitungan",
+   "Variabel dalam hitungan",
+   "variabel",
+   360,
+   420,
+   [
+    "assign"
+   ]
+  ],
+  [
+   "penamaan",
+   "penamaan",
+   "Penamaan yang valid",
+   "variabel",
+   300,
+   330,
+   [
+    "let"
+   ]
+  ],
+  [
+   "salinan",
+   "salinan nilai",
+   "Salinan nilai",
+   "variabel",
+   560,
+   170,
+   [
+    "let",
+    "const"
+   ]
+  ],
+  [
+   "string",
+   "string",
+   "Teks (string)",
+   "tipe-data",
+   650,
+   320,
+   [
+    "number",
+    "assign"
+   ]
+  ],
+  [
+   "number",
+   "number",
+   "Angka (number)",
+   "tipe-data",
+   720,
+   150,
+   [
+    "salinan"
+   ]
+  ],
+  [
+   "boolean",
+   "boolean",
+   "Benar/salah (boolean)",
+   "tipe-data",
+   820,
+   260,
+   [
+    "number"
+   ]
+  ],
+  [
+   "ifelse",
+   "if / else",
+   "Percabangan if / else",
+   "percabangan",
+   880,
+   110,
+   [
+    "boolean"
+   ]
+  ],
+  [
+   "for",
+   "for",
+   "Perulangan for",
+   "perulangan",
+   930,
+   390,
+   [
+    "ifelse"
+   ]
+  ]
+ ],
+ "chapters": [
+  [
+   1,
+   1,
+   "chapter",
+   "halo",
+   "Halo, JavaScript",
+   "console.log, komentar",
+   "hand",
+   "Modul 1 · Fondasi",
+   30
+  ],
+  [
+   2,
+   2,
+   "chapter",
+   "variabel",
+   "Variabel",
+   "let, const, penamaan",
+   "box",
+   "",
+   64
+  ],
+  [
+   3,
+   0,
+   "project",
+   "proyek-uang-saku",
+   "Proyek · Kalkulator Uang Saku",
+   "milestone + review mentor",
+   "folder-kanban",
+   "",
+   40
+  ],
+  [
+   4,
+   3,
+   "chapter",
+   "tipe-data",
+   "Tipe Data",
+   "string, number, boolean",
+   "shapes",
+   "",
+   72
+  ],
+  [
+   5,
+   4,
+   "chapter",
+   "operator",
+   "Operator",
+   "aritmetika, perbandingan",
+   "plus-minus",
+   "Modul 2 · Logika",
+   34
+  ],
+  [
+   6,
+   5,
+   "chapter",
+   "percabangan",
+   "Percabangan",
+   "if, else, switch",
+   "git-branch",
+   "",
+   58
+  ],
+  [
+   7,
+   6,
+   "chapter",
+   "perulangan",
+   "Perulangan",
+   "for, while",
+   "repeat",
+   "",
+   28
+  ],
+  [
+   8,
+   7,
+   "chapter",
+   "fungsi",
+   "Fungsi",
+   "parameter, return",
+   "function-square",
+   "Modul 3 · Struktur",
+   62
+  ],
+  [
+   9,
+   8,
+   "chapter",
+   "array",
+   "Array",
+   "daftar, index, loop",
+   "layout-list",
+   "",
+   36
+  ],
+  [
+   10,
+   0,
+   "final",
+   "ujian-akhir",
+   "Ujian Akhir Jalur",
+   "sertifikat",
+   "award",
+   "",
+   60
+  ]
+ ],
+ "descriptions": {
+  "halo": "Program pertamamu: menyuruh komputer menampilkan sesuatu dengan <span class=\"ic\">console.log</span>, menulis catatan dengan komentar, dan memahami bahwa perintah dijalankan berurutan dari atas.",
+  "variabel": "Cara program menyimpan dan mengingat nilai: membuat kotak berlabel, mengganti isinya, menguncinya dengan <span class=\"ic\">const</span>, dan memakainya dalam hitungan.",
+  "tipe-data": "Setiap nilai punya jenis: teks, angka, atau benar/salah. Jenisnya menentukan apa yang bisa dilakukan dengannya.",
+  "operator": "Menghitung dan membandingkan nilai: + − × ÷, sisa bagi, serta === dan !==.",
+  "percabangan": "Membuat program memilih jalan: if, else, dan switch.",
+  "perulangan": "Mengulang perintah tanpa menulisnya berkali-kali: for dan while.",
+  "fungsi": "Membungkus langkah menjadi perintah baru yang bisa dipakai ulang, dengan parameter dan return.",
+  "array": "Menyimpan banyak nilai dalam satu daftar, mengambilnya lewat index, dan mengolahnya dengan loop."
+ },
+ "project": {
+  "slug": "uang-saku",
+  "title": "Kalkulator Uang Saku",
+  "number": 1,
+  "unlock_after": 2,
+  "description": "Aplikasi kecil untuk mencatat pemasukan dan jajan, lalu menghitung sisa uang per minggu. Memakai variabel, operator, percabangan, dan fungsi.",
+  "milestones": [
+   {
+    "title": "Data uang saku",
+    "topic": "variabel",
+    "filename": "uang-saku.js",
+    "starter": "// Milestone 1 · data uang saku\n",
+    "reqs": [
+     {
+      "text": "Simpan <span class=\"t-mono\">uangSaku</span> = 100000 dengan const",
+      "tests": [
+       "m1a"
+      ]
+     },
+     {
+      "text": "Simpan jajan tiga hari dalam variabel",
+      "tests": [
+       "m1b"
+      ]
+     },
+     {
+      "text": "Cetak uang saku",
+      "tests": [
+       "m1c"
+      ]
+     }
+    ],
+    "tests": [
+     {
+      "id": "m1a",
+      "name": "uangSaku = 100000",
+      "kind": "expr",
+      "expr": "uangSaku === 100000",
+      "fail": "uangSaku ${uangSaku}"
+     },
+     {
+      "id": "m1b",
+      "name": "ada variabel jajan",
+      "kind": "source_regex",
+      "pattern": "(let|const)\\s+jajan",
+      "fail": "belum ada variabel jajan"
+     },
+     {
+      "id": "m1c",
+      "name": "uang saku tercetak",
+      "kind": "stdout_includes",
+      "text": "100000",
+      "fail": "100000 belum tampil di output"
+     }
+    ]
+   },
+   {
+    "title": "Hitung sisa",
+    "topic": "operator",
+    "filename": "uang-saku.js",
+    "starter": "// Milestone 2 · hitung sisa\n",
+    "reqs": [
+     {
+      "text": "Hitung total jajan dari 3 hari",
+      "tests": [
+       "m2a"
+      ]
+     },
+     {
+      "text": "Simpan <span class=\"t-mono\">sisa</span> = uang saku − total",
+      "tests": [
+       "m2b"
+      ]
+     },
+     {
+      "text": "Cetak laporan dengan format rupiah",
+      "tests": [
+       "m2c"
+      ]
+     }
+    ],
+    "tests": [
+     {
+      "id": "m2a",
+      "name": "total jajan = 57000",
+      "kind": "expr",
+      "expr": "total === 57000",
+      "fail": "total ${total}"
+     },
+     {
+      "id": "m2b",
+      "name": "sisa = 43000",
+      "kind": "expr",
+      "expr": "sisa === 43000",
+      "fail": "sisa ${sisa}"
+     },
+     {
+      "id": "m2c",
+      "name": "format “Rp43.000”",
+      "kind": "stdout_includes",
+      "text": "Rp43.000",
+      "fail": "belum ada “Rp43.000” di output"
+     }
+    ]
+   },
+   {
+    "title": "Peringatan boros",
+    "topic": "percabangan",
+    "filename": "uang-saku.js",
+    "starter": "// Milestone 3 · peringatan boros\n",
+    "reqs": [
+     {
+      "text": "Jika sisa di bawah 50000, cetak kata <span class=\"t-mono\">boros</span>",
+      "tests": [
+       "m3a"
+      ]
+     },
+     {
+      "text": "Pakai if / else",
+      "tests": [
+       "m3b"
+      ]
+     }
+    ],
+    "tests": [
+     {
+      "id": "m3a",
+      "name": "peringatan “boros” muncul",
+      "kind": "stdout_includes",
+      "text": "boros",
+      "fail": "belum ada peringatan"
+     },
+     {
+      "id": "m3b",
+      "name": "memakai if",
+      "kind": "source_regex",
+      "pattern": "\\bif\\s*\\(",
+      "fail": "belum ada if"
+     }
+    ]
+   },
+   {
+    "title": "Rapikan jadi fungsi",
+    "topic": "fungsi",
+    "filename": "uang-saku.js",
+    "starter": "// Milestone 4 · rapikan jadi fungsi\n",
+    "reqs": [
+     {
+      "text": "Buat fungsi <span class=\"t-mono\">hitungSisa(uang, jajan)</span>",
+      "tests": [
+       "m4a",
+       "m4b"
+      ]
+     }
+    ],
+    "tests": [
+     {
+      "id": "m4a",
+      "name": "ada fungsi hitungSisa",
+      "kind": "expr",
+      "expr": "typeof hitungSisa === 'function'",
+      "fail": "fungsi belum ada"
+     },
+     {
+      "id": "m4b",
+      "name": "hitungSisa(100000, 57000) = 43000",
+      "kind": "expr",
+      "expr": "hitungSisa(100000, 57000) === 43000",
+      "fail": "hasilnya belum 43000"
+     }
+    ],
+    "portfolio": {
+     "headline": "Rp43.000",
+     "caption": "Uang saku minggu ini",
+     "pct": 43,
+     "warning": "Jajan Rabu melebihi rata-rata"
+    }
+   }
+  ]
+ },
+ "first": [
+  "Adit",
+  "Bella",
+  "Citra",
+  "Dewi",
+  "Eka",
+  "Fajar",
+  "Gita",
+  "Hana",
+  "Indra",
+  "Joko",
+  "Kiki",
+  "Lala",
+  "Mira",
+  "Nando",
+  "Oki",
+  "Putra",
+  "Qori",
+  "Rani",
+  "Sinta",
+  "Tegar",
+  "Umi",
+  "Vino",
+  "Wulan",
+  "Yoga",
+  "Zahra",
+  "Arif",
+  "Bima",
+  "Cahya",
+  "Dian",
+  "Elsa"
+ ],
+ "last": [
+  "Pratama",
+  "Lestari",
+  "Wijaya",
+  "Santoso",
+  "Hidayat",
+  "Kusuma",
+  "Saputri",
+  "Nugroho",
+  "Rahmawati",
+  "Firmansyah",
+  "Permata",
+  "Utami"
+ ],
+ "first_try_wrong": {
+  "q1": 0.12,
+  "q2": 0.25,
+  "q3": 0.2,
+  "q4": 0.35,
+  "q5": 0.58,
+  "q6": 0.15,
+  "q7": 0.1,
+  "q8": 0.12
+ },
+ "kuis_wrong": {
+  "k9": 0.58,
+  "k5": 0.3,
+  "k6": 0.33,
+  "k15": 0.85,
+  "k4": 0.45,
+  "k19": 0.4,
+  "k16": 0.3
+ },
+ "percabangan_draft": {
+  "minutes": {
+   "pahami": 6,
+   "perkuat": 8,
+   "kuis": 4,
+   "uji": 10
+  },
+  "concepts": [
+   "ifelse"
+  ],
+  "cheatsheet": "",
+  "pahami": {
+   "scenes": [
+    {
+     "id": "s1",
+     "kicker": "",
+     "title": "Program bisa <em>memilih jalan</em>.",
+     "lead": "Kadang program harus melakukan hal berbeda tergantung keadaan: lulus atau belum, siang atau malam.",
+     "visual": {
+      "type": "intro",
+      "side": {
+       "kind": "bubble",
+       "text": "Lulus!"
+      },
+      "objectives_label": "Setelah bagian ini kamu bisa",
+      "objectives": [
+       "Menulis <span class=\"ic\">if</span> dan <span class=\"ic\">else</span>",
+       "Membaca syarat yang bernilai true atau false"
+      ]
+     },
+     "advance": "free",
+     "concepts": [
+      "ifelse"
+     ]
+    },
+    {
+     "id": "s2",
+     "kicker": "Ringkasan",
+     "title": "Yang perlu kamu ingat.",
+     "visual": {
+      "type": "summary",
+      "cards": [
+       {
+        "icon": "git-branch",
+        "title": "if memilih",
+        "body": "Blok dijalankan jika syaratnya true."
+       }
+      ]
+     },
+     "advance": "free",
+     "concepts": []
+    }
+   ]
+  },
+  "perkuat": {
+   "items": []
+  },
+  "kuis": {
+   "round_size": 10,
+   "seconds": 20,
+   "pass_pct": 70,
+   "combo_max": 3,
+   "bank": []
+  },
+  "ulangan": {
+   "minutes": 30,
+   "pass_mark": 75,
+   "questions": []
+  },
+  "challenge": null,
+  "uji_mode": "any"
+ }
+}

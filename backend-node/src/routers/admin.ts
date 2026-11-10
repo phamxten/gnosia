@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 import { all, asc, type Db, desc, eq, first, get as getRow, insert, isIn, save, sql, T, where } from '../db.ts';
 import { dict, fail, int, model, oneOf, optional, params, str } from '../http.ts';
-import { deepEqual, first as firstWord, get, isInt, type Json, or, pyRound, pyStr, repr, sortBy, truthy } from '../py.ts';
+import { deepEqual, first as firstWord, get, isInt, type Json, or, roundHalfEven, toStr, repr, sortBy, truthy } from '../util.ts';
 import type { Chapter, User } from '../schema.ts';
 import { hashPassword, requireRole } from '../security.ts';
 import * as activity from '../services/activity.ts';
@@ -51,9 +51,9 @@ async function overview(db: Db, me: User): Promise<Json> {
     const k = `${r.user_id}:${r.chapter_id}`;
     if (!firstRounds.has(k)) firstRounds.set(k, r);
   }
-  const gate = firstRounds.size ? pyRound((100 * [...firstRounds.values()].filter(r => r.passed).length) / firstRounds.size) : 0;
+  const gate = firstRounds.size ? roundHalfEven((100 * [...firstRounds.values()].filter(r => r.passed).length) / firstRounds.size) : 0;
   const done = await all(db, T.chapter_progress, where(sql`${T.chapter_progress.completed_at} is not null`, sql`${T.chapter_progress.active_seconds} > 0`));
-  const avgMin = done.length ? pyRound(done.reduce((a, p) => a + p.active_seconds, 0) / done.length / 60) : 0;
+  const avgMin = done.length ? roundHalfEven(done.reduce((a, p) => a + p.active_seconds, 0) / done.length / 60) : 0;
   const dist: Record<string, number> = Object.fromEntries(unlock.PHASES.map(p => [p, 0]));
   for (const p of await all(db, T.chapter_progress, where(sql`${T.chapter_progress.completed_at} is null`, isIn(T.chapter_progress.user_id, ids))))
     dist[unlock.currentPhase(p.phases)] += 1;
@@ -90,7 +90,7 @@ async function itemStats(db: Db, chapterId: number, phase: string): Promise<Stat
     t[1] += 1;
     if (!r.correct) t[0] += 1;
   }
-  return Object.fromEntries([...tally].map(([k, [w, n]]) => [k, { n, wrong_pct: pyRound((100 * w) / n) }]));
+  return Object.fromEntries([...tally].map(([k, [w, n]]) => [k, { n, wrong_pct: roundHalfEven((100 * w) / n) }]));
 }
 
 async function contentFlags(db: Db, limit = 6): Promise<Json[]> {
@@ -111,7 +111,7 @@ async function contentFlags(db: Db, limit = 6): Promise<Json[]> {
           flags.push({
             phase: 'perkuat', icon: get(item, 'type') === 'bug' ? 'bug' : 'list-checks', score: s.wrong_pct,
             title: `Perkuat · ${ch.title} · soal ${num} “${or(get(item, 'label'), plain(get(item, 'title', '')))}”`,
-            reason: `${s.wrong_pct}% salah di percobaan 1, jauh di atas rata-rata ${pyRound(avg)}%. Mungkin instruksinya ambigu.`,
+            reason: `${s.wrong_pct}% salah di percobaan 1, jauh di atas rata-rata ${roundHalfEven(avg)}%. Mungkin instruksinya ambigu.`,
             href: `/admin/bab/${ch.id}?edit=item:${iid}`,
           });
         }
@@ -132,8 +132,8 @@ async function contentFlags(db: Db, limit = 6): Promise<Json[]> {
     for (const [scene, n] of stuck) {
       if (started >= 4 && n / started >= 0.25) {
         flags.push({
-          phase: 'pahami', icon: 'clapperboard', score: pyRound((100 * n) / started), title: `Pahami · ${ch.title} · scene ${scene}`,
-          reason: `${pyRound((100 * n) / started)}% siswa berhenti di scene ini lebih dari 2 hari.`, href: `/admin/bab/${ch.id}?edit=scene:${scene}`,
+          phase: 'pahami', icon: 'clapperboard', score: roundHalfEven((100 * n) / started), title: `Pahami · ${ch.title} · scene ${scene}`,
+          reason: `${roundHalfEven((100 * n) / started)}% siswa berhenti di scene ini lebih dari 2 hari.`, href: `/admin/bab/${ch.id}?edit=scene:${scene}`,
         });
       }
     }
@@ -177,7 +177,7 @@ async function sceneStats(db: Db, ch: Chapter): Promise<Json> {
       reached.set(scene, (reached.get(scene) ?? 0) + 1);
     }
   }
-  return Object.fromEntries([...reached].map(([k, v]) => [String(k), { stopped_pct: total ? pyRound((100 * v) / total) : 0 }]));
+  return Object.fromEntries([...reached].map(([k, v]) => [String(k), { stopped_pct: total ? roundHalfEven((100 * v) / total) : 0 }]));
 }
 
 /** For BugPick items: which wrong line learners pick most (for the data insight callout). */
@@ -189,7 +189,7 @@ async function wrongLineStats(db: Db, ch: Chapter, draft: Json): Promise<Json> {
   for (const { item_id, answer } of rows) {
     if (answer === null) continue;
     const d = (out[item_id] ??= {});
-    d[pyStr(answer)] = (d[pyStr(answer)] ?? 0) + 1;
+    d[toStr(answer)] = (d[toStr(answer)] ?? 0) + 1;
   }
   return out;
 }
@@ -217,8 +217,8 @@ export function validate(c: Json): string[] {
     } else if (t === 'fill') {
       if ((get(it, 'code', '').split('{{slot}}').length - 1) !== get(it, 'answer', []).length) p.push(`Soal Perkuat ${n}: jumlah kotak kosong tidak sama dengan jawaban.`);
     } else if (t === 'parsons') {
-      const a = get(it, 'answer', []).map(pyStr).sort();
-      const b = get(it, 'lines', []).map((line: Json) => pyStr(get(line, 'id'))).sort();
+      const a = get(it, 'answer', []).map(toStr).sort();
+      const b = get(it, 'lines', []).map((line: Json) => toStr(get(line, 'id'))).sort();
       if (!deepEqual(a, b)) p.push(`Soal Perkuat ${n}: urutan jawaban harus memakai semua baris.`);
     }
     if (truthy(get(it, 'similar_id')) && !ids.some(i => deepEqual(i, it.similar_id))) p.push(`Soal Perkuat ${n}: soal serupa yang ditautkan tidak ada.`);
@@ -291,7 +291,7 @@ export default function admin(app: FastifyInstance) {
         const ch = (await getRow(db, T.chapters, p.chapter_id))!;
         lines.push([
           u.name, u.email, klass ? klass.name : '', `${ch.number} · ${ch.title}`, unlock.currentPhase(p.phases),
-          ...unlock.PHASES.map(ph => p.phases[ph].state + (get(p.phases[ph], 'score') !== null ? ` ${pyRound(p.phases[ph].score!)}` : '')),
+          ...unlock.PHASES.map(ph => p.phases[ph].state + (get(p.phases[ph], 'score') !== null ? ` ${roundHalfEven(p.phases[ph].score!)}` : '')),
           p.completed_at ? 'ya' : '', String(Math.floor(p.active_seconds / 60)), String(xp),
         ]);
       }

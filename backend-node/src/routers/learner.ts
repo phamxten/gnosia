@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 
 import { all, asc, count, type Db, desc, eq, first, get as getRow, ne, save, sql, T, where } from '../db.ts';
 import { fail, int, model, optional, params } from '../http.ts';
-import { fmt0, get, type Json, or, pyInt, pyRound, sortBy, sum, truthy } from '../py.ts';
+import { fmt0, get, type Json, or, toInt, roundHalfEven, sortBy, sum, truthy } from '../util.ts';
 import type { Chapter, ChapterProgress, Path, User } from '../schema.ts';
 import { currentUser } from '../security.ts';
 import * as activity from '../services/activity.ts';
@@ -68,7 +68,7 @@ const stateOf = (db: Db, user: User, chapter: Chapter, phase: string) =>
 
 export async function pahamiScene(db: Db, user: User, chapter: Chapter): Promise<number> {
   const st = await stateOf(db, user, chapter, 'pahami');
-  return st ? pyInt(get(or(st.data, {}), 'scene', 1)) : 1;
+  return st ? toInt(get(or(st.data, {}), 'scene', 1)) : 1;
 }
 
 export async function perkuatSolved(db: Db, user: User, chapter: Chapter): Promise<number> {
@@ -88,7 +88,7 @@ function etaMinutes(content: Json, phases: unlock.Phases): number {
     if (st.state === 'done') continue;
     total += or(get(mins, ph), 5) * (1 - Number(st.progress || 0));
   }
-  return Math.max(1, pyRound(total));
+  return Math.max(1, roundHalfEven(total));
 }
 
 async function continueCard(db: Db, user: User, chapter: Chapter, prog: ChapterProgress, path: Path): Promise<Json> {
@@ -216,7 +216,7 @@ async function ujiText(db: Db, user: User, c: Chapter): Promise<string> {
 async function tableRow(db: Db, user: User, c: Chapter, p: ChapterProgress | undefined, unlocked: boolean): Promise<Json> {
   const content = or(await content_svc.published(db, c, p ? p.version : null), {});
   let tier = 0;
-  if (truthy(get(content, 'concepts'))) tier = pyRound((await learning.chapterMasteryPct(db, user, c, content.concepts)) / 20);
+  if (truthy(get(content, 'concepts'))) tier = roundHalfEven((await learning.chapterMasteryPct(db, user, c, content.concepts)) / 20);
   const dash = { text: '–', on: false };
   if (!p) {
     const none = !unlocked || !c.version ? 'terkunci' : '–';
@@ -320,7 +320,7 @@ export default function learner(app: FastifyInstance) {
       current_id: cur ? cur.id : null,
       summary: {
         chapters_done: done, chapters_total: learn.length, phases_done: donePhases, phases_total: totalPhases,
-        pct: totalPhases ? pyRound((100 * donePhases) / totalPhases) : 0,
+        pct: totalPhases ? roundHalfEven((100 * donePhases) / totalPhases) : 0,
         ring: [0, 1, 2, 3].map(i => (totalPhases ? Math.min(1.0, Math.max(0.0, (donePhases / totalPhases) * 4 - i)) : 0)),
       },
       other_paths: (await all(db, T.paths, ne(T.paths.id, path.id))).map(p => ({ slug: p.slug, title: p.title })),
@@ -377,7 +377,7 @@ export default function learner(app: FastifyInstance) {
       completed: Boolean(prog.completed_at),
       ring: unlock.ringValues(prog.phases),
       primary: { label: primaryLabel, href: phaseLink(ch, primaryPhase, content), phase: primaryPhase },
-      eta: { total: sum(Object.values(mins).map(v => pyInt(or(v, 0)))), left: prog.completed_at ? 0 : etaMinutes(content, prog.phases) },
+      eta: { total: sum(Object.values(mins).map(v => toInt(or(v, 0)))), left: prog.completed_at ? 0 : etaMinutes(content, prog.phases) },
       facts: {
         scenes: counts.scenes,
         live: get(get(content, 'pahami', {}), 'scenes', []).filter((s: Json) => ['livecode', 'knobcalc'].includes(get(or(get(s, 'visual'), {}), 'type'))).length,
@@ -408,13 +408,13 @@ export default function learner(app: FastifyInstance) {
       const m = mrows.get(c.id);
       const tier = m ? m.tier : 0;
       const state = tier === 0 ? 'off' : m && m.weak ? 'weak' : 'on';
-      return { key: c.key, name: c.name, x: c.x, y: c.y, mastery: pyRound(tier / 5, 2), state, tier };
+      return { key: c.key, name: c.name, x: c.x, y: c.y, mastery: roundHalfEven(tier / 5, 2), state, tier };
     });
     const edges = concepts.flatMap(c => (c.requires || []).filter(req => byKey.has(req)).map(req => [req, c.key]));
     // kpis
     const firstTry = (await db.q.select({ correct: T.attempts.correct }).from(T.attempts)
       .where(where(eq(T.attempts.user_id, user.id), eq(T.attempts.phase, 'perkuat'), eq(T.attempts.attempt_no, 1)))).map(r => r.correct);
-    const acc = firstTry.length ? pyRound((100 * firstTry.filter(Boolean).length) / firstTry.length) : 0;
+    const acc = firstTry.length ? roundHalfEven((100 * firstTry.filter(Boolean).length) / firstTry.length) : 0;
     const mastery = await learning.overallMasteryPct(db, user, path.id);
     const snaps = await all(db, T.mastery_snapshots, eq(T.mastery_snapshots.user_id, user.id), asc(T.mastery_snapshots.week_start), asc(T.mastery_snapshots.id));
     const tr = trend(snaps);

@@ -1,7 +1,7 @@
 <#
   GNOSIA · Cloudflare quick tunnel (Docker) — Windows PowerShell 5.1+ / PowerShell 7
 
-  Menjalankan aplikasi (FastAPI + React + PostgreSQL) di Docker lalu membuka URL publik sementara
+  Menjalankan aplikasi (Node.js + React + PostgreSQL) di Docker lalu membuka URL publik sementara
   https://<acak>.trycloudflare.com lewat Cloudflare. Tidak perlu akun Cloudflare.
 
   Pemakaian (dari folder proyek):

@@ -1,5 +1,5 @@
 {
-  "_note": "Demo accounts created by `python -m app.seed`. All share the test password below. Change or delete them before a real deployment.",
+  "_note": "Demo accounts created by `npm run seed`. All share the test password below. Change or delete them before a real deployment.",
   "password": "gnosia123",
   "org": "SMK SIG",
   "staff": [

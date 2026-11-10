@@ -1,5 +1,5 @@
 /* Scores and XP (CONCEPT §3.3, §5). XP is never removed. */
-import { pyRound } from '../py.ts';
+import { roundHalfEven } from '../util.ts';
 
 export const KUIS_COMBO_MAX = 3;
 export const KUIS_POINTS_BASE = 100;
@@ -29,7 +29,7 @@ export function kuisXp(score: number): number {
 }
 
 export function accuracyPct(correct: number, total: number): number {
-  return total ? pyRound((100 * correct) / total) : 0;
+  return total ? roundHalfEven((100 * correct) / total) : 0;
 }
 
 export function perkuatItemXp(firstTry: boolean): number {

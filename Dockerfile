@@ -1,6 +1,5 @@
 # GNOSIA — one image: the Node.js (Fastify) backend serves the API, the WebSocket and the built React app on port 8000.
 # Node.js is also what runs learner code (backend-node/runner/sandbox.mjs), so one runtime does everything.
-# The previous Python/FastAPI image is kept as Dockerfile.python until the Node backend has run in production.
 
 # ---- 1. build the frontend ---------------------------------------------------------
 FROM node:24-bookworm-slim AS web

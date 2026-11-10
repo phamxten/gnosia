@@ -190,7 +190,6 @@ gnosia/
 │   ├── src/seed/         # Kurikulum bawaan (Bab 1: Halo, Bab 2: Variabel, dsb)
 │   ├── test/             # Pengujian alur end-to-end (node:test)
 │   └── runner/           # Sandbox runner Node.js (node:vm aman)
-├── backend/              # Backend Python/FastAPI lama (pembanding selama migrasi)
 ├── design/               # Spesifikasi desain, token CSS/JSON, & tangkapan layar
 │   ├── shots/            # High-res screenshots 1440px & mobile 390px
 │   ├── mockups/          # Mockup murni HTML/CSS referensi
@@ -268,7 +267,7 @@ Skrip akan secara otomatis:
    ```
 3. **Buka browser:** `http://localhost:5173`
 
-> `dev.ps1` (Windows) masih menjalankan backend Python lama di folder `backend/`; jalankan dua perintah `npm` di atas untuk memakai backend Node.js.
+> Di Windows, `.\dev.ps1 -Setup` lalu `.\dev.ps1` menjalankan hal yang sama.
 
 ## 👥 Akun Demo Siap Pakai
 
@@ -307,7 +306,6 @@ npm run typecheck
 ```
 ├── .github/              # Alur CI/CD GitHub Actions
 ├── backend-node/         # Server Fastify (Node.js + TypeScript), seed data, & sandbox runner
-├── backend/              # Backend Python/FastAPI lama (pembanding selama migrasi)
 ├── design/               # Design token, spesifikasi layar, & aset tangkapan layar
 │   └── shots/            # Tangkapan layar antarmuka GNOSIA
 ├── docs/                 # Aset dokumentasi & vektor SVG maskot
@@ -316,7 +314,6 @@ npm run typecheck
 ├── scripts/              # Skrip tunnel Cloudflare & utilitas database
 ├── docker-compose.yml    # Konfigurasi containerization multi-service
 ├── Dockerfile            # Multi-stage Docker build frontend + backend Node.js
-├── Dockerfile.python     # Image backend Python lama (cadangan)
 ├── dev.ps1               # Runner praktis satu perintah dev
 ├── LICENSE               # Lisensi MIT
 └── README.md             # Dokumentasi utama proyek

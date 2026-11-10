@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 
 import { BACKEND_DIR, settings } from '../config.ts';
-import { get, type Json } from '../py.ts';
+import { get, type Json } from '../util.ts';
 
 export const SANDBOX = join(BACKEND_DIR, 'runner', 'sandbox.mjs');
 export const MAX_CODE_CHARS = 20_000;

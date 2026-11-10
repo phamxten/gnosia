@@ -2,7 +2,7 @@
    Days are 'YYYY-MM-DD' strings in the local zone (WIB by default). */
 import { settings } from '../config.ts';
 import { Db, first, eq, insert, save, sql, T, where } from '../db.ts';
-import { pyInt } from '../py.ts';
+import { toInt } from '../util.ts';
 import type { User } from '../schema.ts';
 
 export const HEARTBEAT_MAX_SECONDS = 60;
@@ -63,7 +63,7 @@ export async function weekXp(db: Db, userId: number): Promise<number> {
 }
 
 export async function recordActivity(db: Db, user: User, seconds: number): Promise<void> {
-  seconds = Math.max(0, Math.min(HEARTBEAT_MAX_SECONDS, pyInt(seconds)));
+  seconds = Math.max(0, Math.min(HEARTBEAT_MAX_SECONDS, toInt(seconds)));
   await save(db, T.users, user, { last_active_at: new Date() });
   if (!seconds) return;
   const day = localToday();

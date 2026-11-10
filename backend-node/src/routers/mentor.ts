@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 import { all, asc, type Db, desc, eq, first, get as getRow, insert, isIn, remove, save, sql, T, where } from '../db.ts';
 import { fail, int, model, optional, params, str } from '../http.ts';
-import { first as firstWord, get, type Json, mostCommon, or, pyRound, sortBy, truthy } from '../py.ts';
+import { first as firstWord, get, type Json, mostCommon, or, roundHalfEven, sortBy, truthy } from '../util.ts';
 import type { Chapter, Klass, Submission, User } from '../schema.ts';
 import { requireRole } from '../security.ts';
 import * as activity from '../services/activity.ts';
@@ -79,7 +79,7 @@ async function position(db: Db, u: User): Promise<Json> {
 
 async function avgTier(db: Db, u: User): Promise<number> {
   const rows = await db.q.select({ t: T.concept_mastery.tier }).from(T.concept_mastery).where(where(eq(T.concept_mastery.user_id, u.id), sql`${T.concept_mastery.tier} > 0`));
-  return rows.length ? pyRound(rows.reduce((a, r) => a + r.t, 0) / rows.length) : 0;
+  return rows.length ? roundHalfEven(rows.reduce((a, r) => a + r.t, 0) / rows.length) : 0;
 }
 
 async function weak(db: Db, u: User): Promise<boolean> {
@@ -120,7 +120,7 @@ async function hardestItem(db: Db, ids: number[], ch: Chapter, phase: string): P
   const pool: Json[] = phase === 'perkuat' ? get(get(content, 'perkuat', {}), 'items', []) : get(get(content, 'kuis', {}), 'bank', []);
   const item = or(content_svc.find(pool, iid), {});
   const name = or(get(item, 'label'), signals.plain(or(get(item, 'title'), or(get(item, 't'), iid))));
-  return `Soal “${name}” paling sering salah (${pyRound((100 * w) / n)}%).`;
+  return `Soal “${name}” paling sering salah (${roundHalfEven((100 * w) / n)}%).`;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];

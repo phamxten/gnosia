@@ -22,7 +22,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   await initDb();
   const app = Fastify({ logger: opts.logger ?? false, trustProxy: true, bodyLimit: 16 * 1024 * 1024 });
 
-  // An empty body with a JSON content type is `{}`, not an error (FastAPI reads it the same way).
+  // An empty body with a JSON content type is `{}`, not an error (the frontend sends no body for some POSTs).
   app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
     try { done(null, body === '' ? {} : JSON.parse(body as string)); } catch { done(Object.assign(new Error('JSON decode error'), { statusCode: 422 }), undefined); }
   });

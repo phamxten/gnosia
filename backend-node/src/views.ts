@@ -1,6 +1,6 @@
 /* Small serializers shared by several routers. */
 import { count, Db, eq, get, T, where } from './db.ts';
-import { words } from './py.ts';
+import { words } from './util.ts';
 import type { User } from './schema.ts';
 import * as activity from './services/activity.ts';
 

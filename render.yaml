@@ -1,5 +1,5 @@
 # One-click deploy on Render: New + > Blueprint > pick this repo.
-# The app is the Dockerfile in the repo root (FastAPI serves the API, WebSocket and the built React app).
+# The app is the Dockerfile in the repo root (the Node.js server serves the API, WebSocket and the built React app).
 services:
   - type: web
     name: gnosia

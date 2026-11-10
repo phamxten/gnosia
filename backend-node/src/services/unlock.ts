@@ -6,7 +6,7 @@
     uji:open     --exam passed / all tests-->  uji:done  -> chapter done -> next chapter pahami:open
 
 Pure functions over the `phases` object so they are trivially testable. */
-import { clone, pyRound } from '../py.ts';
+import { clone, roundHalfEven } from '../util.ts';
 
 export const PHASES = ['pahami', 'perkuat', 'kuis', 'uji'] as const;
 export type Phase = (typeof PHASES)[number];
@@ -39,7 +39,7 @@ export function isChapterDone(phases: Phases): boolean {
 
 export function setProgress(phases: Phases, phase: string, progress: number): Phases {
   const out = clone(phases);
-  if (out[phase].state === 'open') out[phase].progress = Math.max(0.0, Math.min(1.0, pyRound(progress, 3)));
+  if (out[phase].state === 'open') out[phase].progress = Math.max(0.0, Math.min(1.0, roundHalfEven(progress, 3)));
   return out;
 }
 
@@ -68,7 +68,7 @@ export function recordKuis(phases: Phases, pct: number, passPct = KUIS_PASS_PCT)
   const out = clone(phases);
   if (out.kuis.state !== 'done') {
     out.kuis.score = Math.max(pct, out.kuis.score || 0);
-    out.kuis.progress = pyRound(pct / 100, 3);
+    out.kuis.progress = roundHalfEven(pct / 100, 3);
   }
   return [out, false];
 }

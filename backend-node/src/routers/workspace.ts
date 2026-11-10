@@ -5,7 +5,7 @@ import type { FastifyInstance } from 'fastify';
 
 import { all, asc, type Db, desc, eq, first, get as getRow, insert, ne, remove, save, T, where } from '../db.ts';
 import { anyValue, bool, dict, fail, int, list, model, optional, params, str } from '../http.ts';
-import { cut, get, type Json, or, pyInt, sortBy, truthy } from '../py.ts';
+import { cut, get, type Json, or, toInt, sortBy, truthy } from '../util.ts';
 import type { Notebook, Project, ProjectProgress, User } from '../schema.ts';
 import { currentUser } from '../security.ts';
 import * as activity from '../services/activity.ts';

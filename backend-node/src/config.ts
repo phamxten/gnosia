@@ -26,7 +26,7 @@ function int(v: string | undefined, def: number): number {
   return parseInt(v, 10);
 }
 
-/** Hosted Postgres hands out postgres:// or postgresql://; the Python backend used postgresql+psycopg://.
+/** Hosted Postgres hands out postgres:// or postgresql://; the legacy postgresql+psycopg:// form of older .env files is accepted too.
     Anything else (unset, or the old sqlite:/// default) means the embedded PGlite database in backend-node/data. */
 function databaseUrl(v: string | undefined): string {
   const m = (v ?? '').match(/^postgres(?:ql)?(?:\+\w+)?:\/\/(.*)$/);

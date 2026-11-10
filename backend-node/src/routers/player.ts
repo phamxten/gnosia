@@ -8,7 +8,7 @@ import type { FastifyInstance } from 'fastify';
 import { settings } from '../config.ts';
 import { count, type Db, desc, eq, first, get as getRow, insert, save, sql, T, where, withDb } from '../db.ts';
 import { anyValue, dict, fail, HttpError, int, list, model, optional, params, str } from '../http.ts';
-import { cut, get, type Json, or, pyInt, pyRound, pyStr, sample, shuffle, sum, truthy } from '../py.ts';
+import { cut, get, type Json, or, toInt, roundHalfEven, toStr, sample, shuffle, sum, truthy } from '../util.ts';
 import type { Chapter, ChapterProgress, ExamSession, QuizRound, User } from '../schema.ts';
 import { currentUser, userFromToken } from '../security.ts';
 import * as activity from '../services/activity.ts';
@@ -81,7 +81,7 @@ async function perkuatView(db: Db, user: User, ch: Chapter, prog: ChapterProgres
     ...(await header(db, user, ch, prog, content)),
     mode,
     items: pub,
-    index: Math.min(pyInt(get(data, 'index', 0)), Math.max(0, order.length - 1)),
+    index: Math.min(toInt(get(data, 'index', 0)), Math.max(0, order.length - 1)),
     solved: get(data, 'solved', {}),
     attempts: get(data, 'attempts', {}),
     hint: get(data, 'hint', {}),
@@ -176,16 +176,16 @@ async function grade(db: Db, user: User, ch: Chapter, s: ExamSession, content: J
   for (const [idx, q] of (ex.questions as Json[]).entries()) {
     const i = idx + 1;
     const ans = get(s.answers || {}, q.id);
-    const pts = pyInt(get(q, 'pts', 10));
+    const pts = toInt(get(q, 'pts', 10));
     total += pts;
     let note = '', earned: number, ok: boolean;
     if (q.type === 'code') {
       if (!truthy(ans)) [earned, ok] = [0, false];
       else {
-        const res = await runner.run(pyStr(ans), get(q, 'tests', []));
+        const res = await runner.run(toStr(ans), get(q, 'tests', []));
         const passed = res.results.filter((r: Json) => r.pass).length;
         const n = Math.max(1, res.results.length);
-        earned = pyRound((pts * passed) / n);
+        earned = roundHalfEven((pts * passed) / n);
         ok = passed === n;
         if (!ok) note = runner.errorText(get(res, 'error')) || (res.results.find((r: Json) => !r.pass)?.detail ?? '');
       }
@@ -194,9 +194,9 @@ async function grade(db: Db, user: User, ch: Chapter, s: ExamSession, content: J
       earned = ok ? pts : 0;
       if (!ok && !blank(ans)) {
         const right = q.type === 'choice' ? q.o[q.answer] : or(get(q, 'accept'), [''])[0];
-        const s = pyStr(ans);
-        const given = q.type === 'choice' && /^\d+$/.test(s.replace(/^-+/, '')) && pyInt(ans) >= 0 && pyInt(ans) < q.o.length ? q.o[pyInt(ans)] : ans;
-        note = `Kamu menjawab ${plain(pyStr(given))}, seharusnya ${plain(pyStr(right))}.`;
+        const s = toStr(ans);
+        const given = q.type === 'choice' && /^\d+$/.test(s.replace(/^-+/, '')) && toInt(ans) >= 0 && toInt(ans) < q.o.length ? q.o[toInt(ans)] : ans;
+        note = `Kamu menjawab ${plain(toStr(given))}, seharusnya ${plain(toStr(right))}.`;
       } else if (!ok) note = 'Belum dijawab.';
     }
     got += earned;
@@ -211,8 +211,8 @@ async function grade(db: Db, user: User, ch: Chapter, s: ExamSession, content: J
     }
     rows.push({ n: i, label: or(get(q, 'label'), cut(plain(q.t), 60)), ok, pts: earned, max: pts, note });
   }
-  const score = total ? pyRound((100 * got) / total) : 0;
-  await save(db, T.exam_sessions, s, { score, results: rows, submitted_at: new Date(), passed: score >= pyInt(get(ex, 'pass_mark', 75)) });
+  const score = total ? roundHalfEven((100 * got) / total) : 0;
+  await save(db, T.exam_sessions, s, { score, results: rows, submitted_at: new Date(), passed: score >= toInt(get(ex, 'pass_mark', 75)) });
   let out: Json = { chapter_done: false, xp: 0 };
   if (s.passed) {
     const prog = await learning.ensureProgress(db, user, ch);
@@ -306,7 +306,7 @@ export default function player(app: FastifyInstance) {
     return {
       ...(await header(db, user, ch, prog, content)),
       scenes,
-      scene: Math.min(Math.max(1, pyInt(get(st.data, 'scene', 1))), Math.max(1, scenes.length)),
+      scene: Math.min(Math.max(1, toInt(get(st.data, 'scene', 1))), Math.max(1, scenes.length)),
       done: prog.phases.pahami.state === 'done',
       minutes: get(or(get(content, 'minutes'), {}), 'pahami', 6),
       next: { items: content_svc.phaseCounts(content).items },
@@ -321,7 +321,7 @@ export default function player(app: FastifyInstance) {
     const scene = Math.max(1, Math.min(n, (req.body as { scene: number }).scene));
     const st = await learning.playerState(db, user, ch, 'pahami');
     const data: Json = { ...st.data, scene };
-    data.max_scene = Math.max(scene, pyInt(get(data, 'max_scene', 1)));
+    data.max_scene = Math.max(scene, toInt(get(data, 'max_scene', 1)));
     await learning.saveState(db, st, data);
     await learning.setPhaseProgress(db, prog, 'pahami', (data.max_scene - 1) / n);
     await activity.recordActivity(db, user, 0);
@@ -815,7 +815,7 @@ export default function player(app: FastifyInstance) {
         if (msg === null || typeof msg !== 'object' || Array.isArray(msg)) return socket.close();
         const user = await userFromToken(db, token);
         if (!user) return socket.close();
-        const code = pyStr(get(msg, 'code', ''));
+        const code = toStr(get(msg, 'code', ''));
         const ch = Number.isInteger(chapterId) ? await getRow(db, T.chapters, chapterId) : undefined;
         if (!ch) return send({ type: 'error', message: 'Bab tidak ditemukan.' });
         let res: Json, outcome: Json;

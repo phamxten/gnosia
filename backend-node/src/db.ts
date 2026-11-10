@@ -1,8 +1,7 @@
 /* Database access. PostgreSQL when GNOSIA_DATABASE_URL is a postgres URL, otherwise PGlite
    (Postgres compiled to WebAssembly, stored in backend-node/data) so development needs no server.
 
-   Every request gets one connection inside a transaction, like the SQLAlchemy session the Python
-   backend used: `db.commit()` makes the work so far permanent and starts a new transaction, and
+   Every request gets one connection inside a transaction: `db.commit()` makes the work so far permanent and starts a new transaction, and
    whatever is not committed when the request ends (or fails) is rolled back. */
 import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -56,7 +55,7 @@ async function connect(): Promise<Conn> {
 }
 
 export class Db {
-  /** rows fetched by id, like SQLAlchemy's identity map: db.get() of a row already seen costs no query */
+  /** rows fetched by id (identity map): db.get() of a row already seen costs no query */
   readonly seen = new Map<Tbl, Map<number, any>>();
   constructor(private conn: Conn) {}
   get q(): Q { return this.conn.q; }
@@ -84,7 +83,7 @@ export async function withDb<R>(fn: (db: Db) => Promise<R>): Promise<R> {
 const SCHEMA_SQL = join(dirname(fileURLToPath(import.meta.url)), 'schema.sql');
 const TABLES = Object.values(schema).filter(t => is(t, PgTable)) as unknown as PgTableWithColumns<any>[];
 
-/** Base.metadata.create_all: creates the tables when the database is empty. */
+/** Creates the tables when the database is empty. */
 export async function initDb(): Promise<void> {
   await withDb(async db => {
     const rows = await db.q.execute(sql`select to_regclass('public.users') as t`);
@@ -164,7 +163,7 @@ export async function remove<TT extends Tbl>(db: Db, t: TT, id: number): Promise
   await db.q.delete(t as any).where(eq(t.id, id));
 }
 
-/** col IN (...) that is simply false for an empty list, like SQLAlchemy */
+/** col IN (...) that is simply false for an empty list */
 export function isIn(col: PgColumn, values: readonly (number | string)[]): SQL {
   return values.length ? inArray(col, [...values]) : sql`false`;
 }

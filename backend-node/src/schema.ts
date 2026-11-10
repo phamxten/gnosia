@@ -1,16 +1,15 @@
-/* Database tables (Drizzle), column for column the same as the SQLAlchemy models the Python backend
-   used, so both backends can share one database. schema.sql is the DDL SQLAlchemy emits for them.
+/* Database tables (Drizzle). schema.sql is the matching DDL that initDb() runs on an empty database.
 
    Chapter content (scenes, exercises, quiz bank, exam, challenge) is stored as a versioned JSON
    document: `chapters.draft` is what the Builder edits, and each publish snapshots it into
    `chapter_versions`. Learners always read a published version, and every attempt records which
    version it was made against.
 
-   Defaults live here ($defaultFn), not in the database: SQLAlchemy applied them client-side too. */
+   Defaults live here ($defaultFn), not in the database. */
 import { boolean, date, integer, json, pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 
 const now = () => new Date();
-const ts = (name: string) => timestamp(name, { mode: 'date' }); // UTC, stored without a zone like SQLAlchemy did
+const ts = (name: string) => timestamp(name, { mode: 'date' }); // UTC, stored without a time zone
 const str = (name: string, length: number) => varchar(name, { length });
 
 // ---------------------------------------------------------------- people ---

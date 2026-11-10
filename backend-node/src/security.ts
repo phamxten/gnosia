@@ -9,7 +9,7 @@ import type { User } from './schema.ts';
 
 const ALGO = 'HS256';
 
-// bcrypt only reads the first 72 bytes: cut there explicitly, as the Python backend did, so hashes stay interchangeable.
+// bcrypt only reads the first 72 bytes: cut there explicitly so every bcrypt implementation agrees on the same hash.
 const bytes = (pw: string) => Buffer.from(pw, 'utf8').subarray(0, 72);
 
 export async function hashPassword(pw: string): Promise<string> {

@@ -55,7 +55,7 @@ gnosia-design/
 | Need | Use | Why |
 |---|---|---|
 | Routing | `react-router` v7 | Routes in IA §2 |
-| Server state / mock API | `@tanstack/react-query` + MSW (mock service worker) | Swap to the FastAPI backend later without touching UI |
+| Server state / mock API | `@tanstack/react-query` + MSW (mock service worker) | Swap to the Node.js backend later without touching UI |
 | Client state | `zustand` | player session, settings (theme, motion, sound) |
 | Animation | **`motion`** (Framer Motion) | springs/`layoutId` per MOTION.md |
 | Drag & drop | **`@dnd-kit/core` + `sortable`** | TokenFill, Parsons, MatchPairs with keyboard sensors |
@@ -115,13 +115,13 @@ src/
 - [ ] All states from `SCREENS.md` / `STATES.md` implemented with the given copy.
 - [ ] Motion per `MOTION.md`, and correct at intensity Full / Calm / Off.
 - [ ] Keyboard map from IA §4 works; no drag-only interactions.
-- [ ] Only tokens used; `python3 scripts/contrast.py` passes if tokens changed.
+- [ ] Only tokens used; `node scripts/contrast.mjs` passes if tokens changed.
 - [ ] No IDE chrome, no emoji, no decorative gradients, and one primary action per screen.
 
 ## 5. Scripts
 ```bash
-python3 scripts/contrast.py            # must print no FAIL
-python3 scripts/build-tokens-json.py   # after editing tokens.css
+node scripts/contrast.mjs            # must print no FAIL
+node scripts/build-tokens-json.mjs   # after editing tokens.css
 node scripts/shot.mjs pahami ink 390 scene=4    # screenshot → shots/  (env: WAIT, CLICK="sel;sel", FULL=1, TAG)
 ```
 `shot.mjs` needs a local Playwright install. Set `PW_PATH` to `node_modules/playwright` if it is not at the default path.
