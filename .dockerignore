@@ -13,3 +13,7 @@ backend/*.db-*
 design/
 .claude/
 *.log
+backend/gnosia.db
+backend-node/dist
+backend-node/data
+backend-node/.env

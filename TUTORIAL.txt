@@ -1,0 +1,382 @@
+=====================================================================
+  TUTORIAL GNOSIA
+  Menjalankan di laptop, memakai Docker, dan deploy ke Hostinger
+=====================================================================
+
+Isi:
+  1. Gambaran singkat
+  2. Menjalankan di laptop (paling mudah)
+  3. Menjalankan dengan Docker
+  4. Deploy ke Hostinger
+       A. Paket VPS (paling aman)
+       B. Paket Business / Cloud (Node.js Web App)
+       C. Memasang subdomain
+  5. Sebelum dibuka untuk umum (WAJIB)
+  6. Push perubahan ke GitHub
+  7. Masalah yang sering muncul
+
+
+---------------------------------------------------------------------
+1. GAMBARAN SINGKAT
+---------------------------------------------------------------------
+
+Gnosia terdiri dari dua bagian:
+
+  - frontend/      Tampilan web (React). Yang dilihat siswa di browser.
+  - backend-node/  Server (Node.js + Fastify). Mengurus login, data,
+                   skor, dan menjalankan kode siswa di sandbox.
+
+Dua-duanya harus hidup supaya web bisa dipakai. Saat di-deploy,
+keduanya digabung: server Node.js menyajikan tampilan sekaligus API
+di satu alamat (satu port, 8000).
+
+Folder backend/ adalah backend Python yang lama. Ia disimpan sebagai
+pembanding dan tidak dipakai lagi oleh start.sh maupun Dockerfile.
+
+Kebutuhan: Node.js versi 22 atau lebih baru. Cek dengan:  node -v
+
+
+---------------------------------------------------------------------
+2. MENJALANKAN DI LAPTOP (paling mudah)
+---------------------------------------------------------------------
+
+Langkah:
+
+  1. Buka terminal.
+  2. Jalankan:
+
+         /home/qhumy/gnosia-local/start.sh
+
+  3. Tunggu sampai muncul tulisan server siap (jalan pertama lebih lama
+     karena data demo dibuat dan library diunduh).
+  4. Buka browser ke:  http://localhost:5173
+  5. Untuk mematikan: tekan Ctrl+C di terminal tadi.
+
+Akun demo (semua memakai kata sandi: gnosia123)
+
+  admin    sekar@smksig.sch.id
+  mentor   dimas@smksig.sch.id
+  siswa    nadia@smksig.sch.id
+           alex@smksig.sch.id
+           rizky@smksig.sch.id
+           maya@smksig.sch.id
+           bayu@smksig.sch.id
+           salsa@smksig.sch.id
+
+Catatan:
+  - Tanpa pengaturan apa pun, data disimpan di folder backend-node/data
+    (database tertanam). Folder ini tidak ikut ke GitHub.
+  - Mau mulai dari data demo yang bersih lagi:
+
+        cd backend-node
+        npm run seed -- --reset
+
+  - Mau memakai PostgreSQL sendiri: salin backend-node/.env.example
+    menjadi backend-node/.env lalu isi GNOSIA_DATABASE_URL.
+
+Cara manual (dua terminal), kalau start.sh bermasalah:
+
+  Terminal 1 (server):
+        cd backend-node
+        npm install
+        npm run seed
+        npm run dev          -> http://localhost:8000
+
+  Terminal 2 (tampilan):
+        cd frontend
+        npm install
+        npm run dev          -> http://localhost:5173
+
+Menjalankan pengujian otomatis:
+
+        cd backend-node
+        npm test
+
+
+---------------------------------------------------------------------
+3. MENJALANKAN DENGAN DOCKER
+---------------------------------------------------------------------
+
+Docker menjalankan server + database PostgreSQL sekaligus, mirip
+seperti di server sungguhan.
+
+  1. Buat file .env di folder gnosia-local (contoh isinya ada di
+     .env.example). Minimal isi tiga baris ini dengan nilai acak:
+
+         POSTGRES_PASSWORD=isi-teks-acak-panjang
+         SECRET_KEY=isi-teks-acak-yang-lebih-panjang
+         DEMO_PASSWORD=kata-sandi-akun-demo-pilihanmu
+         COOKIE_SECURE=false
+
+     (COOKIE_SECURE=false hanya untuk http://localhost. Di server
+     dengan HTTPS biarkan true.)
+
+  2. Jalankan:
+
+         docker compose up -d --build
+
+  3. Buka:  http://localhost:8000
+  4. Lihat log:   docker compose logs -f app
+  5. Mematikan:   docker compose down
+     (data tetap aman di volume pgdata)
+
+
+---------------------------------------------------------------------
+4. DEPLOY KE HOSTINGER
+---------------------------------------------------------------------
+
+Pertama, cek jenis paket Hostinger yang kamu punya. Ini menentukan
+cara yang bisa dipakai.
+
+  Paket                                   Bisa?
+  --------------------------------------  ----------------------------
+  Web Hosting biasa (Single / Premium)    TIDAK. Hanya PHP, tanpa
+                                          Node.js.
+  Business Web Hosting / Cloud            Kemungkinan bisa (bagian B),
+                                          tapi ada hal yang harus diuji.
+  VPS                                     BISA, paling aman (bagian A).
+
+Catatan penting soal Gnosia di paket Web/Cloud (bagian B):
+  - PostgreSQL tidak tersedia di paket itu. Pakai database gratis dari
+    luar (Neon atau Supabase) dan tempel alamatnya di pengaturan.
+  - Sandbox kode siswa menjalankan "node" sebagai proses terpisah. Belum
+    dipastikan apakah Hostinger mengizinkannya. WAJIB diuji setelah
+    deploy (lihat langkah uji di bagian B).
+  - Fitur robot penguji di halaman Challenge memakai WebSocket. Kalau
+    tidak didukung, halaman otomatis memakai cadangan HTTP biasa.
+
+Kalau ada keraguan, pilih VPS.
+
+
+=== A. PAKET VPS (Docker) ===
+
+Yang disiapkan: VPS Ubuntu dari Hostinger, alamat IP-nya, dan akses SSH
+(ada di panel VPS Hostinger).
+
+ Langkah 1 - Masuk ke server (dari laptop):
+
+        ssh root@ALAMAT-IP-VPS
+
+ Langkah 2 - Pasang Docker. Skrip bantu sudah ada di repo ini:
+
+        apt update && apt install -y git
+        git clone https://github.com/phamxten/gnosia.git
+        cd gnosia
+        sudo bash scripts/install-docker-ubuntu.sh
+
+ Langkah 3 - Buat file pengaturan:
+
+        cp .env.example .env
+        nano .env
+
+     Isi nilai ini (teks acak panjang, jangan pakai contoh):
+
+         POSTGRES_PASSWORD=...
+         SECRET_KEY=...
+         DEMO_PASSWORD=...        <- kata sandi akun demo, JANGAN gnosia123
+         COOKIE_SECURE=true
+         APP_PORT=8000
+
+     Simpan di nano: Ctrl+O, Enter, lalu Ctrl+X.
+     Teks acak bisa dibuat dengan:   openssl rand -hex 32
+
+ Langkah 4 - Jalankan:
+
+        docker compose up -d --build
+        docker compose ps         (semua harus "running"/"healthy")
+
+     Uji dari laptop: buka http://ALAMAT-IP-VPS:8000
+
+ Langkah 5 - Pasang domain + HTTPS dengan Caddy (otomatis):
+
+        apt install -y caddy
+        nano /etc/caddy/Caddyfile
+
+     Hapus isinya, ganti dengan (ganti nama subdomain milikmu):
+
+         gnosia.contoh.com {
+             reverse_proxy localhost:8000
+         }
+
+     Lalu:
+
+        systemctl reload caddy
+
+     Pastikan subdomain sudah diarahkan ke IP VPS (bagian C), dan port
+     80 serta 443 tidak diblokir firewall. Setelah itu buka
+     https://gnosia.contoh.com
+
+ Langkah 6 - Update kapan saja setelah ada perubahan di GitHub:
+
+        cd gnosia
+        git pull
+        docker compose up -d --build
+
+
+=== B. PAKET BUSINESS / CLOUD (Node.js Web App) ===
+
+Sumber resmi: https://docs.hostinger.com/node.js/creating-an-app
+
+Persiapan di repo (SUDAH dikerjakan): ada package.json di folder utama
+yang punya dua perintah:
+
+   npm run build   -> membangun tampilan dan server
+   npm start       -> membuat data awal bila kosong, lalu menyalakan server
+
+Persiapan database (karena PostgreSQL tidak ada di paket ini):
+
+  1. Buat akun gratis di https://neon.tech (atau supabase.com).
+  2. Buat database baru, lalu salin "connection string"-nya. Bentuknya:
+
+         postgresql://user:password@host/namadb?sslmode=require
+
+  3. Simpan, akan ditempel ke Hostinger di langkah 4.
+
+Deploy:
+
+  1. Masuk hPanel Hostinger.
+  2. Klik  Websites > Add Website > Node.js web app.
+  3. Pilih "Connect with GitHub", izinkan akses, pilih repo
+     phamxten/gnosia, branch main.
+  4. Atur kolom pengaturan build:
+
+         Framework preset : Other
+         Node.js version  : 22 (atau 24)
+         Build command    : npm run build
+         Entry file       : backend-node/dist/start.js
+         Output directory : (kosongkan / biarkan)
+
+     (Nama kolom bisa sedikit berbeda dari yang tertulis di sini.
+      Kalau ada kolom "Start command", isi:  npm start )
+
+  5. Isi Environment variables:
+
+         GNOSIA_DATABASE_URL  = (connection string dari Neon/Supabase)
+         GNOSIA_SECRET_KEY    = (teks acak panjang)
+         GNOSIA_DEMO_PASSWORD = (kata sandi akun demo pilihanmu)
+         GNOSIA_COOKIE_SECURE = true
+         GNOSIA_HOST          = 0.0.0.0
+
+     Variabel PORT biasanya diisi otomatis oleh Hostinger. Kalau
+     Hostinger menyebut port tertentu, tambahkan  PORT = nomor itu.
+
+  6. Klik Deploy. Tunggu build selesai (beberapa menit).
+  7. Pasang domain/subdomain pada proses pembuatan website (bagian C).
+
+UJI WAJIB setelah deploy (masuk sebagai siswa, mis. nadia@smksig.sch.id):
+
+  a. Halaman login terbuka dan login berhasil.
+  b. Buka Bab 1 > Uji > Challenge, klik "Jalankan tes".
+     - Robot penguji muncul dan memberi hasil  -> sandbox AMAN dipakai.
+     - Muncul pesan "Runner gagal" atau error 503 -> Hostinger melarang
+       proses anak. Paket ini TIDAK cocok untuk Gnosia, pindah ke VPS
+       (bagian A) atau gunakan Render.
+
+Update: setiap kali kamu push ke branch main di GitHub, Hostinger
+otomatis membangun dan men-deploy ulang.
+
+
+=== C. MEMASANG SUBDOMAIN ===
+
+Kalau subdomain berasal dari domain milik temanmu, kamu butuh akses ke
+pengaturan DNS domain itu di Hostinger (atau minta temanmu yang
+menambahkan record-nya).
+
+  Jika memakai Node.js Web App (bagian B):
+     Pilih subdomain saat proses Add Website. Hostinger mengaturnya.
+
+  Jika memakai VPS (bagian A):
+     hPanel > Domains > (pilih domain) > DNS / Nameservers > DNS Zone,
+     lalu tambahkan record:
+
+         Type  : A
+         Name  : gnosia            (bagian depan subdomain)
+         Points to : ALAMAT-IP-VPS
+         TTL   : 14400 (bawaan)
+
+     Hapus record lama dengan nama yang sama bila ada.
+     Perubahan DNS bisa butuh beberapa menit sampai beberapa jam.
+     Cek:   ping gnosia.contoh.com   (harus menunjuk ke IP VPS)
+
+
+---------------------------------------------------------------------
+5. SEBELUM DIBUKA UNTUK UMUM (WAJIB)
+---------------------------------------------------------------------
+
+  [ ] Ganti kata sandi akun demo. Nilai bawaan gnosia123 diketahui semua
+      orang. Isi DEMO_PASSWORD (Docker) atau GNOSIA_DEMO_PASSWORD
+      (Hostinger Node.js) SEBELUM jalan pertama. Kata sandi ini hanya
+      dipakai saat data demo dibuat pertama kali.
+  [ ] Isi SECRET_KEY / GNOSIA_SECRET_KEY dengan teks acak panjang.
+      Jangan biarkan nilai bawaan.
+  [ ] Pastikan situs memakai HTTPS dan COOKIE_SECURE=true.
+  [ ] Jangan pernah commit file .env ke GitHub. (.gitignore sudah
+      mengecualikannya.)
+  [ ] Akun demo (sekar@, dimas@, dst.) berisi data contoh. Untuk
+      sekolah sungguhan, buat akun admin sendiri lewat menu admin,
+      lalu hapus atau ubah peran akun demo.
+  [ ] Sandbox kode siswa cukup untuk sekolah/kelas sendiri. Untuk
+      layanan publik terbuka, jalankan di container terpisah.
+
+
+---------------------------------------------------------------------
+6. PUSH PERUBAHAN KE GITHUB
+---------------------------------------------------------------------
+
+Jalankan SATU PER SATU dari folder gnosia-local:
+
+        cd /home/qhumy/gnosia-local
+        git status                    (lihat apa yang berubah)
+        git add .
+        git commit -m "catatan singkat perubahan"
+        git push
+
+Penjelasan:
+  git add .       memasukkan semua perubahan ke "kardus"
+  git commit      menutup kardus dan memberi label
+  git push        mengirim kardus ke GitHub
+
+Cek dulu dengan "git status" sebelum "git add ." supaya tidak ada file
+rahasia (seperti .env) yang ikut terkirim.
+
+
+---------------------------------------------------------------------
+7. MASALAH YANG SERING MUNCUL
+---------------------------------------------------------------------
+
+"Port 8000 / 5173 sudah dipakai"
+   Ada server lain yang masih hidup. Cari dan matikan:
+        ss -ltnp | grep -E ':(8000|5173)'
+   lalu matikan proses yang tampil (kill NOMOR-PID).
+
+"node: command not found" atau versi Node lama
+   Pasang Node.js 22+ dari https://nodejs.org lalu cek:  node -v
+
+Login gagal "Email atau kata sandi belum cocok" di server publik
+   Kata sandi demo adalah nilai DEMO_PASSWORD yang kamu isi saat jalan
+   pertama, bukan gnosia123. Kata sandi tidak berubah kalau kamu
+   mengubah variabel itu setelah data sudah dibuat. Untuk mengulang dari
+   awal (MENGHAPUS SEMUA DATA):
+        Docker:   docker compose down -v   lalu   docker compose up -d --build
+        Neon:     hapus isi database, lalu deploy ulang.
+
+Layar kosong / error di halaman setelah deploy
+   Pastikan build selesai tanpa error (lihat log build di hPanel atau
+   "docker compose logs app"). Pastikan frontend ikut terbangun
+   ("npm run build" membangun keduanya).
+
+Tes Challenge gagal "Runner gagal" (503)
+   Server tidak mengizinkan proses terpisah untuk sandbox. Lihat
+   bagian 4B langkah uji. Pindah ke VPS.
+
+Data demo hilang setelah restart (di laptop)
+   Cek apakah folder backend-node/data terhapus. Di server, pakai
+   PostgreSQL (bukan database tertanam) supaya data aman.
+
+Ingin kembali ke backend Python lama
+   Gunakan Dockerfile.python:
+        docker build -f Dockerfile.python -t gnosia-python .
+
+=====================================================================
+  Akhir tutorial
+=====================================================================
