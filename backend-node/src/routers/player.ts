@@ -6,7 +6,7 @@ the chapter page. */
 import type { FastifyInstance } from 'fastify';
 
 import { settings } from '../config.ts';
-import { count, type Db, desc, eq, first, get as getRow, insert, save, sql, T, where, withDb } from '../db.ts';
+import { count, type Db, desc, eq, first, get as getRow, gte, insert, isNull, ne, save, T, where, withDb } from '../db.ts';
 import { anyValue, dict, fail, HttpError, int, list, model, optional, params, str } from '../http.ts';
 import { cut, get, type Json, or, toInt, roundHalfEven, toStr, sample, shuffle, sum, truthy } from '../util.ts';
 import type { Chapter, ChapterProgress, ExamSession, QuizRound, User } from '../schema.ts';
@@ -640,7 +640,7 @@ export default function player(app: FastifyInstance) {
       await save(db, T.quiz_rounds, rnd, { finished: true, answers, pct });
       if (rnd.kind === 'daily') {
         const already = await count(db, T.quiz_rounds, where(eq(T.quiz_rounds.user_id, user.id), eq(T.quiz_rounds.kind, 'daily'), eq(T.quiz_rounds.finished, true),
-          sql`${T.quiz_rounds.created_at} >= ${activity.dayStart(activity.localToday())}`, sql`${T.quiz_rounds.id} <> ${rnd.id}`));
+          gte(T.quiz_rounds.created_at, activity.dayStart(activity.localToday())), ne(T.quiz_rounds.id, rnd.id)));
         if (!already) xp += await activity.addXp(db, user, Math.min(scoring.XP_DAILY_QUIZ_CAP, scoring.kuisXp(rnd.score)), 'Kuis harian');
         await save(db, T.quiz_rounds, rnd, { passed: true });
       } else {
@@ -691,7 +691,7 @@ export default function player(app: FastifyInstance) {
     let [prog, content] = await requirePhase(db, user, ch, 'uji');
     if (get(content, 'uji_mode') === 'challenge') fail(409, { code: 'mode', message: 'Bab ini memakai Challenge.', redirect: `/bab/${ch.id}/uji/challenge` });
     const ex = exam(content);
-    let s = await first(db, T.exam_sessions, where(eq(T.exam_sessions.user_id, user.id), eq(T.exam_sessions.chapter_id, ch.id), sql`${T.exam_sessions.submitted_at} is null`),
+    let s = await first(db, T.exam_sessions, where(eq(T.exam_sessions.user_id, user.id), eq(T.exam_sessions.chapter_id, ch.id), isNull(T.exam_sessions.submitted_at)),
       desc(T.exam_sessions.id));
     if (s && s.deadline.getTime() < Date.now() - 60_000) {
       await grade(db, user, ch, s, content); // time ran out while away: auto-submit

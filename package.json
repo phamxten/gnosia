@@ -1,10 +1,16 @@
 {
   "name": "gnosia",
   "private": true,
-  "description": "Scripts at the repository root for hosts that build and start one Node.js app (e.g. Hostinger). Docker uses ./Dockerfile instead.",
+  "type": "module",
+  "main": "server.js",
+  "description": "GNOSIA — Node.js (Fastify) + React 19 + MySQL. Ready for Hostinger Node.js Web Apps.",
   "scripts": {
-    "build": "npm --prefix frontend ci --include=dev && npm --prefix frontend run build && npm --prefix backend-node ci --include=dev && npm --prefix backend-node run build",
-    "start": "node backend-node/dist/start.js"
+    "build": "node scripts/build-hostinger.mjs",
+    "start": "node server.js",
+    "seed": "node backend-node/dist/seed/index.js",
+    "zip:hostinger": "bash scripts/make-hostinger-zip.sh"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }

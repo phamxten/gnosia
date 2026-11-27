@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # GNOSIA · Cloudflare quick tunnel (Docker) — Linux / macOS / WSL / Git Bash
 #
-# Menjalankan aplikasi (Node.js + React + PostgreSQL) di Docker lalu membuka URL publik sementara
+# Menjalankan aplikasi (Node.js + React + MySQL) di Docker lalu membuka URL publik sementara
 # https://<acak>.trycloudflare.com lewat Cloudflare. Tidak perlu akun Cloudflare.
 #
 # Pemakaian (dari folder proyek):
@@ -48,7 +48,7 @@ init_env() {
   umask 077
   cat >"$ENV_FILE" <<EOF
 # Dibuat otomatis oleh scripts/tunnel.sh. Jangan dibagikan.
-POSTGRES_PASSWORD=$(secret 24)
+MYSQL_PASSWORD=$(secret 24)
 SECRET_KEY=$(secret 48)
 DEMO_PASSWORD=$(secret 12)
 APP_PORT=8000

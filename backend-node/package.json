@@ -12,21 +12,18 @@
     "test": "tsx --test --test-concurrency=1 test/*.test.ts"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.5.16",
     "@fastify/cookie": "^11.1.5",
     "@fastify/static": "^10.1.10",
     "@fastify/websocket": "^11.3.7",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.8",
     "jsonwebtoken": "^9.0.3",
-    "pg": "^8.23.1"
+    "mysql2": "^3.24.6"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.6",
-    "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"

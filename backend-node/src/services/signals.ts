@@ -6,7 +6,7 @@
   stalled    no progress in the current phase > 3 days    "Bayu tidak maju dari Pahami · scene 4 selama 5 hari"
   review     challenge / project submitted                "Salsa minta review · Challenge Rapor"
 */
-import { all, asc, Db, eq, first, get as getRow, isIn, sql, T, where } from '../db.ts';
+import { all, asc, Db, eq, first, get as getRow, gte, isIn, isNull, T, where } from '../db.ts';
 import { cut, first as firstWord, get, isInt, type Json, mostCommon, or, roundHalfEven, toStr, repr, sortBy, truthy } from '../util.ts';
 import type { Attempt, Chapter, HintOpen, User } from '../schema.ts';
 import * as content_svc from './content.ts';
@@ -101,7 +101,7 @@ export async function learnerSignals(db: Db, learner: User, cache: Cache = new M
 
   // hint rushing: ≥ 3 items where every hint was opened within 30 s of seeing the item
   const perItem = new Map<string, HintOpen[]>();
-  for (const h of await all(db, T.hint_opens, where(eq(T.hint_opens.user_id, learner.id), sql`${T.hint_opens.created_at} >= ${new Date(now - 7 * DAY_MS)}`))) {
+  for (const h of await all(db, T.hint_opens, where(eq(T.hint_opens.user_id, learner.id), gte(T.hint_opens.created_at, new Date(now - 7 * DAY_MS))))) {
     const k = key2(h.chapter_id, h.item_id);
     perItem.set(k, [...(perItem.get(k) ?? []), h]);
   }
@@ -120,7 +120,7 @@ export async function learnerSignals(db: Db, learner: User, cache: Cache = new M
   }
 
   // stalled in the current phase
-  for (const p of await all(db, T.chapter_progress, where(eq(T.chapter_progress.user_id, learner.id), sql`${T.chapter_progress.completed_at} is null`))) {
+  for (const p of await all(db, T.chapter_progress, where(eq(T.chapter_progress.user_id, learner.id), isNull(T.chapter_progress.completed_at)))) {
     const since = p.updated_at;
     const days = Math.floor((now - since.getTime()) / DAY_MS);
     if (days <= STALL_DAYS) continue;

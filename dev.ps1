@@ -1,8 +1,8 @@
-# GNOSIA — run the backend (Node.js :8000) and the frontend (Vite :5173) together for development.
+﻿# GNOSIA — run the backend (Node.js :8000) and the frontend (Vite :5173) together for development.
 #   .\dev.ps1            start both (Ctrl+C stops both)
 #   .\dev.ps1 -Setup     first run: install packages and seed the demo data
 #   .\dev.ps1 -Reseed    wipe the database and seed the demo data again
-# Without GNOSIA_DATABASE_URL (see backend-node\.env.example) the backend uses an embedded PostgreSQL stored in backend-node\data.
+# Configure MySQL connection in backend-node\.env (see backend-node\.env.example).
 param([switch]$Setup, [switch]$Reseed)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot

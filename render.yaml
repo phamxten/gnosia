@@ -8,7 +8,7 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: GNOSIA_DATABASE_URL
-        sync: false # paste your PostgreSQL connection string (Neon / Supabase / Render Postgres)
+        sync: false # paste your MySQL connection string (mysql://user:password@host:3306/dbname)
       - key: GNOSIA_SECRET_KEY
         generateValue: true
       - key: GNOSIA_DEMO_PASSWORD

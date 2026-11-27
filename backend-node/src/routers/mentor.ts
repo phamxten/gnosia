@@ -1,7 +1,7 @@
 /* Mentor: class overview with attention signals, student detail, review queue. */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
-import { all, asc, type Db, desc, eq, first, get as getRow, insert, isIn, remove, save, sql, T, where } from '../db.ts';
+import { all, asc, type Db, desc, eq, first, get as getRow, gt, insert, isIn, isNotNull, remove, save, sql, T, where } from '../db.ts';
 import { fail, int, model, optional, params, str } from '../http.ts';
 import { first as firstWord, get, type Json, mostCommon, or, roundHalfEven, sortBy, truthy } from '../util.ts';
 import type { Chapter, Klass, Submission, User } from '../schema.ts';
@@ -78,7 +78,7 @@ async function position(db: Db, u: User): Promise<Json> {
 }
 
 async function avgTier(db: Db, u: User): Promise<number> {
-  const rows = await db.q.select({ t: T.concept_mastery.tier }).from(T.concept_mastery).where(where(eq(T.concept_mastery.user_id, u.id), sql`${T.concept_mastery.tier} > 0`));
+  const rows = await db.q.select({ t: T.concept_mastery.tier }).from(T.concept_mastery).where(where(eq(T.concept_mastery.user_id, u.id), gt(T.concept_mastery.tier, 0)));
   return rows.length ? roundHalfEven(rows.reduce((a, r) => a + r.t, 0) / rows.length) : 0;
 }
 
@@ -161,7 +161,7 @@ async function timeline(db: Db, u: User, limit = 12): Promise<Json[]> {
       events.push([latest, { phase: 'uji', title: `Uji · ${ch.title}`, meta: `challenge ${get(or(best.answer, {}), 'passed', 0)}/${get(or(best.answer, {}), 'total', 0)}` }]);
     }
   }
-  for (const r of await all(db, T.quiz_rounds, where(eq(T.quiz_rounds.user_id, u.id), eq(T.quiz_rounds.finished, true), sql`${T.quiz_rounds.chapter_id} is not null`))) {
+  for (const r of await all(db, T.quiz_rounds, where(eq(T.quiz_rounds.user_id, u.id), eq(T.quiz_rounds.finished, true), isNotNull(T.quiz_rounds.chapter_id)))) {
     const ch = (await getRow(db, T.chapters, r.chapter_id))!;
     events.push([r.created_at, { phase: 'kuis', title: `Kuis · ${ch.title}`, meta: `${r.pct}% · ${r.passed ? 'lulus' : 'belum lulus'}` }]);
   }

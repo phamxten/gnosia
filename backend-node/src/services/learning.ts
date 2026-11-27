@@ -1,5 +1,5 @@
 /* Learner progress across chapters: unlocking, phase completion, XP and mastery. */
-import { all, asc, Db, eq, first, get as getRow, insert, isIn, save, sql, T, where } from '../db.ts';
+import { all, asc, Db, eq, first, get as getRow, gt, insert, isIn, save, T, where } from '../db.ts';
 import { get, type Json, or, toInt, roundHalfEven, sum } from '../util.ts';
 import type { Chapter, ChapterProgress, Concept, ConceptMastery, PlayerState, User } from '../schema.ts';
 import * as activity from './activity.ts';
@@ -128,7 +128,7 @@ export async function completePhase(db: Db, user: User, chapter: Chapter, phase:
 }
 
 async function nextLearningChapter(db: Db, chapter: Chapter): Promise<Chapter | undefined> {
-  return first(db, T.chapters, where(eq(T.chapters.path_id, chapter.path_id), eq(T.chapters.kind, 'chapter'), sql`${T.chapters.position} > ${chapter.position}`),
+  return first(db, T.chapters, where(eq(T.chapters.path_id, chapter.path_id), eq(T.chapters.kind, 'chapter'), gt(T.chapters.position, chapter.position)),
     asc(T.chapters.position));
 }
 

@@ -4,13 +4,15 @@ The program runs in a fresh node:vm context without host objects, with a time li
 permission model blocks file writes, child processes and network access. This is adequate for a
 school deployment; for a public service put the runner in a container or use isolated-vm. */
 import { spawn } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { BACKEND_DIR, settings } from '../config.ts';
 import { get, type Json } from '../util.ts';
 
-export const SANDBOX = join(BACKEND_DIR, 'runner', 'sandbox.mjs');
+export const SANDBOX = realpathSync(join(BACKEND_DIR, 'runner', 'sandbox.mjs'));
 export const MAX_CODE_CHARS = 20_000;
+const PERM_FLAG = process.allowedNodeEnvironmentFlags.has('--permission') ? '--permission' : '--experimental-permission';
 
 export class RunnerUnavailable extends Error {}
 
@@ -24,7 +26,7 @@ export async function run(code: string, tests: Json[] = [], varNames: string[] =
   tests = tests || [];
   if (charCount(code) > MAX_CODE_CHARS) return failAll(tests, 'Error', 'Kode terlalu panjang.', 'kode terlalu panjang');
   const job = { code, tests, vars: varNames || [], timeoutMs: settings.runner_timeout_ms };
-  const args = ['--permission', `--allow-fs-read=${dirname(SANDBOX)}`, '--max-old-space-size=64', '--disallow-code-generation-from-strings', SANDBOX];
+  const args = [PERM_FLAG, `--allow-fs-read=${dirname(SANDBOX)}`, '--max-old-space-size=64', '--disallow-code-generation-from-strings', SANDBOX];
   const { status, stdout, stderr, timedOut } = await new Promise<{ status: number | null; stdout: string; stderr: string; timedOut: boolean }>((resolve, reject) => {
     const proc = spawn(settings.node_bin, args, { stdio: ['pipe', 'pipe', 'pipe'] });
     let out = '', err = '', timedOut = false;

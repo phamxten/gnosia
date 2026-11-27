@@ -1,5 +1,5 @@
-/* A throwaway in-memory database per test file, seeded with the demo curriculum and class. */
-process.env.GNOSIA_DATABASE_URL = process.env.GNOSIA_TEST_DATABASE_URL || 'memory://'; // set GNOSIA_TEST_DATABASE_URL to run the suite against PostgreSQL (the database is reset!)
+/* A dedicated MySQL test database, reset and seeded before each test file runs. */
+process.env.GNOSIA_DATABASE_URL = process.env.GNOSIA_TEST_DATABASE_URL || 'mysql://gnosia:gnosia@127.0.0.1:3306/gnosia_test'; // WARNING: this database is reset!
 process.env.GNOSIA_FRONTEND_DIST = '/nonexistent';
 delete process.env.GNOSIA_DEMO_PASSWORD;
 

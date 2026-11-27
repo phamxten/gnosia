@@ -1,8 +1,12 @@
-TUTORIAL SINGKAT GNOSIA
-=======================
+TUTORIAL SINGKAT GNOSIA (NODE.JS + MYSQL)
+=========================================
 
-1. JALANKAN DI LAPTOP
----------------------
+1. JALANKAN DI LAPTOP (LOKAL)
+-----------------------------
+Pastikan MySQL sudah jalan dan buat database + user (sekali saja):
+    sudo mysql -e "CREATE DATABASE IF NOT EXISTS gnosia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS 'gnosia'@'localhost' IDENTIFIED BY 'gnosia'; CREATE USER IF NOT EXISTS 'gnosia'@'127.0.0.1' IDENTIFIED BY 'gnosia'; GRANT ALL PRIVILEGES ON gnosia.* TO 'gnosia'@'localhost'; GRANT ALL PRIVILEGES ON gnosia.* TO 'gnosia'@'127.0.0.1'; FLUSH PRIVILEGES;"
+
+Lalu jalankan:
     cd /home/qhumy/Documents/gnosia
     ./start.sh
 
@@ -10,13 +14,21 @@ Buka http://localhost:5173
 Login: nadia@smksig.sch.id / gnosia123  (akun lain: sekar@ admin, dimas@ mentor,
 alex@ rizky@ maya@ bayu@ salsa@ siswa, semuanya @smksig.sch.id, sandi sama)
 Matikan: Ctrl+C
-Kebutuhan: Node.js 22+ (cek: node -v)
+Kebutuhan: Node.js 22+ & MySQL 8+ / MariaDB 10.6+
 
 
-2. JALANKAN DENGAN DOCKER
+2. HOSTING DI HOSTINGER (NODE.JS WEB APPS + MYSQL)
+--------------------------------------------------
+Buat paket zip siap upload:
+    npm run zip:hostinger
+
+Panduan lengkap langkah demi langkah ada di: docs/DEPLOY-HOSTINGER.md
+
+
+3. JALANKAN DENGAN DOCKER
 -------------------------
 Buat file .env berisi:
-    POSTGRES_PASSWORD=teks-acak
+    MYSQL_PASSWORD=teks-acak
     SECRET_KEY=teks-acak-panjang
     COOKIE_SECURE=false
 

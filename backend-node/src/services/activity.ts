@@ -1,7 +1,7 @@
 /* XP, daily activity minutes and streaks (CONCEPT §5).
    Days are 'YYYY-MM-DD' strings in the local zone (WIB by default). */
 import { settings } from '../config.ts';
-import { Db, first, eq, insert, save, sql, T, where } from '../db.ts';
+import { Db, first, eq, gte, insert, save, sql, T, where } from '../db.ts';
 import { toInt } from '../util.ts';
 import type { User } from '../schema.ts';
 
@@ -49,7 +49,7 @@ export async function addXp(db: Db, user: User, amount: number, reason: string):
 }
 
 export async function totalXp(db: Db, userId: number): Promise<number> {
-  const [r] = await db.q.select({ n: sql<number>`coalesce(sum(${T.xp_events.amount}), 0)::int` }).from(T.xp_events)
+  const [r] = await db.q.select({ n: sql<number>`coalesce(sum(${T.xp_events.amount}), 0)` }).from(T.xp_events)
     .where(eq(T.xp_events.user_id, userId));
   return Number(r?.n ?? 0);
 }
@@ -57,8 +57,8 @@ export async function totalXp(db: Db, userId: number): Promise<number> {
 export async function weekXp(db: Db, userId: number): Promise<number> {
   const today = localToday();
   const start = dayStart(addDays(today, -weekday(today)));
-  const [r] = await db.q.select({ n: sql<number>`coalesce(sum(${T.xp_events.amount}), 0)::int` }).from(T.xp_events)
-    .where(where(eq(T.xp_events.user_id, userId), sql`${T.xp_events.created_at} >= ${start}`));
+  const [r] = await db.q.select({ n: sql<number>`coalesce(sum(${T.xp_events.amount}), 0)` }).from(T.xp_events)
+    .where(where(eq(T.xp_events.user_id, userId), gte(T.xp_events.created_at, start)));
   return Number(r?.n ?? 0);
 }
 
@@ -81,7 +81,7 @@ export async function minutesOn(db: Db, userId: number, day: string): Promise<nu
 export async function goalDays(db: Db, user: User, since: string): Promise<Set<string>> {
   const need = Math.max(1, user.daily_goal_min) * 60;
   const rows = await db.q.select({ day: T.daily_activity.day }).from(T.daily_activity).where(where(
-    eq(T.daily_activity.user_id, user.id), sql`${T.daily_activity.day} >= ${since}`, sql`${T.daily_activity.seconds} >= ${need}`));
+    eq(T.daily_activity.user_id, user.id), gte(T.daily_activity.day, since), gte(T.daily_activity.seconds, need)));
   return new Set(rows.map(r => r.day));
 }
 

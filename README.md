@@ -11,7 +11,7 @@
   <a href="#-maskot-kami-nosi-"><img src="https://img.shields.io/badge/Maskot-Nosi_{_}-8B5CF6?style=for-the-badge" alt="Nosi Mascot" /></a>
   <a href="#-arsitektur--teknologi"><img src="https://img.shields.io/badge/Frontend-React_19_·_TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" /></a>
   <a href="#-arsitektur--teknologi"><img src="https://img.shields.io/badge/Backend-Fastify_·_Node.js-000000?style=for-the-badge&logo=fastify&logoColor=white" alt="Fastify" /></a>
-  <a href="#-arsitektur--teknologi"><img src="https://img.shields.io/badge/Database-PostgreSQL_15+-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+  <a href="#-arsitektur--teknologi"><img src="https://img.shields.io/badge/Database-MySQL_8+_%C2%B7_MariaDB-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" /></a>
   <a href="#-menjalankan-aplikasi"><img src="https://img.shields.io/badge/Deploy-Docker_·_Cloudflare-F38020?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License MIT" /></a>
 </p>
@@ -35,7 +35,7 @@
 - [🚀 Menjalankan Aplikasi](#-menjalankan-aplikasi)
   - [Opsi A: Docker + Cloudflare Tunnel (Satu Perintah, Otomatis)](#opsi-a-docker--cloudflare-tunnel-satu-perintah-otomatis)
   - [Opsi B: Development Lokal (Fastify + Vite)](#opsi-b-development-lokal-fastify--vite)
-  - [Opsi C: Deploy Publik di Render](#opsi-c-deploy-publik-di-render-gratis-link-tetap)
+  - [Opsi C: Hosting di Hostinger (Node.js Web Apps + MySQL)](#opsi-c-hosting-di-hostinger-nodejs-web-apps--mysql)
 - [👥 Akun Demo Siap Pakai](#-akun-demo-siap-pakai)
 - [🧪 Menjalankan Pengujian (Testing)](#-menjalankan-pengujian-testing)
 - [📁 Struktur Repositori](#-struktur-repositori)
@@ -203,7 +203,7 @@ gnosia/
 | **State & Data** | TanStack Query (React Query) | Sinkronisasi data server & cache otomatis |
 | **Code Editor** | CodeMirror 6 | Editor kelas profesional dengan autocomplete JavaScript |
 | **Backend API** | Fastify, Node.js 22+, TypeScript | REST API + WebSocket berkecepatan tinggi |
-| **Database** | PostgreSQL 15+ (PGlite tertanam untuk dev) | Query type-safe via Drizzle ORM |
+| **Database** | MySQL 8+ / MariaDB 10.6+ | Query type-safe via Drizzle ORM (`mysql2`) |
 | **Code Sandbox** | Node.js (`node:vm`) | Isolasi eksekusi kode siswa dengan limit memori & timeout |
 | **DevOps** | Docker, Docker Compose, Cloudflare | Siap kontainer & tunnel instan tanpa IP publik |
 
@@ -228,7 +228,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\tunnel.ps1
 
 Skrip akan secara otomatis:
 1. Menyiapkan kredensial acak yang aman di `.env`.
-2. Menyalakan database PostgreSQL dan aplikasi backend/frontend di Docker.
+2. Menyalakan database MySQL dan aplikasi backend/frontend di Docker.
 3. Menghubungkan ke Cloudflare Quick Tunnel dan mencetak URL aktif:
    `https://<nama-acak>.trycloudflare.com`
 
@@ -242,11 +242,12 @@ Skrip akan secara otomatis:
 
 ### Opsi B: Development Lokal (Fastify + Vite)
 
-**Kebutuhan Sistem:** Node.js 22+. Database server tidak wajib: tanpa `GNOSIA_DATABASE_URL`, backend memakai PostgreSQL tertanam (PGlite) yang disimpan di `backend-node/data`.
+**Kebutuhan Sistem:** Node.js 22+ dan MySQL 8+ / MariaDB 10.6+.
 
-1. **(Opsional) Pakai PostgreSQL sendiri:**
+1. **Siapkan konfigurasi database MySQL:**
    ```bash
    cp backend-node/.env.example backend-node/.env
+   # Sesuaikan GNOSIA_DATABASE_URL atau GNOSIA_DB_* di backend-node/.env
    ```
 2. **Jalankan semuanya (Linux/macOS):**
    ```bash
@@ -269,6 +270,18 @@ Skrip akan secara otomatis:
 
 > Di Windows, `.\dev.ps1 -Setup` lalu `.\dev.ps1` menjalankan hal yang sama.
 
+---
+
+### Opsi C: Hosting di Hostinger (Node.js Web Apps + MySQL)
+
+GNOSIA siap di-deploy ke paket **Hostinger Business / Cloud Web Hosting** menggunakan fitur **Node.js Web Apps** dan database **MySQL / MariaDB** bawaan hPanel (tanpa perlu sewa VPS):
+
+```bash
+npm run zip:hostinger
+```
+
+Perintah di atas mengompilasi frontend & backend lalu menghasilkan `gnosia-hostinger.zip` yang siap di-upload ke hPanel (atau hubungkan langsung repositori GitHub di hPanel). Lihat panduan lengkap langkah demi langkah di **[docs/DEPLOY-HOSTINGER.md](docs/DEPLOY-HOSTINGER.md)**.
+
 ## 👥 Akun Demo Siap Pakai
 
 Semua akun demo di lingkungan lokal menggunakan kata sandi: `gnosia123` *(pada Docker tunnel, kata sandi acak dicetak di terminal)*.
@@ -288,11 +301,9 @@ Semua akun demo di lingkungan lokal menggunakan kata sandi: `gnosia123` *(pada D
 ## 🧪 Menjalankan Pengujian (Testing)
 
 ```bash
-# Pengujian Backend (node:test, database sementara di memori)
+# Pengujian Backend (node:test terhadap database MySQL khusus test — database ini DIRESET!)
 cd backend-node
-npm test
-# Opsional: jalankan terhadap PostgreSQL asli (database ini DIRESET!)
-# GNOSIA_TEST_DATABASE_URL=postgresql://user:pw@localhost:5432/gnosia_test npm test
+GNOSIA_TEST_DATABASE_URL=mysql://gnosia:gnosia@127.0.0.1:3306/gnosia_test npm test
 
 # Validasi Tipe Frontend (TypeScript)
 cd frontend

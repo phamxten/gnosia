@@ -1,7 +1,7 @@
 /* Learner screens around learning: Beranda, Peta, Bab, Progres, activity, palette. */
 import type { FastifyInstance } from 'fastify';
 
-import { all, asc, count, type Db, desc, eq, first, get as getRow, ne, save, sql, T, where } from '../db.ts';
+import { all, asc, count, type Db, desc, eq, first, get as getRow, gte, ne, save, T, where } from '../db.ts';
 import { fail, int, model, optional, params } from '../http.ts';
 import { fmt0, get, type Json, or, toInt, roundHalfEven, sortBy, sum, truthy } from '../util.ts';
 import type { Chapter, ChapterProgress, Path, User } from '../schema.ts';
@@ -249,7 +249,7 @@ export default function learner(app: FastifyInstance) {
     const nb = await first(db, T.notebooks, eq(T.notebooks.user_id, user.id), desc(T.notebooks.updated_at), asc(T.notebooks.id));
     const today = activity.localToday();
     const dailyDone = await count(db, T.quiz_rounds, where(eq(T.quiz_rounds.user_id, user.id), eq(T.quiz_rounds.kind, 'daily'), eq(T.quiz_rounds.finished, true),
-      sql`${T.quiz_rounds.created_at} >= ${activity.dayStart(today)}`));
+      gte(T.quiz_rounds.created_at, activity.dayStart(today))));
     const firstChapter = chapters.find(c => c.kind === 'chapter');
     return {
       first_time: firstTime,

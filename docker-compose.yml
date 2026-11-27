@@ -1,5 +1,5 @@
 # GNOSIA with Docker
-#   docker compose up -d --build                     # app + PostgreSQL → http://localhost:8000
+#   docker compose up -d --build                     # app + MySQL → http://localhost:8000
 #   docker compose --profile tunnel up -d --build    # + temporary public URL (https://….trycloudflare.com)
 # Secrets come from ./.env (created by scripts/tunnel.ps1 or scripts/tunnel.sh, see .env.example).
 
@@ -7,19 +7,20 @@ name: gnosia
 
 services:
   db:
-    image: postgres:17-alpine
+    image: mysql:8.4
     restart: unless-stopped
     environment:
-      POSTGRES_USER: gnosia
-      POSTGRES_DB: gnosia
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?isi POSTGRES_PASSWORD di file .env}
+      MYSQL_DATABASE: gnosia
+      MYSQL_USER: gnosia
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?isi MYSQL_PASSWORD di file .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:?isi MYSQL_PASSWORD di file .env}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mysqldata:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gnosia -d gnosia"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ugnosia", "-p${MYSQL_PASSWORD}"]
       interval: 5s
       timeout: 3s
-      retries: 20
+      retries: 25
 
   app:
     build: .
@@ -29,7 +30,11 @@ services:
       db:
         condition: service_healthy
     environment:
-      GNOSIA_DATABASE_URL: postgresql://gnosia:${POSTGRES_PASSWORD}@db:5432/gnosia
+      GNOSIA_DB_HOST: db
+      GNOSIA_DB_PORT: "3306"
+      GNOSIA_DB_NAME: gnosia
+      GNOSIA_DB_USER: gnosia
+      GNOSIA_DB_PASSWORD: ${MYSQL_PASSWORD}
       GNOSIA_SECRET_KEY: ${SECRET_KEY:?isi SECRET_KEY di file .env}
       GNOSIA_DEMO_PASSWORD: ${DEMO_PASSWORD:-}
       # cookies only over HTTPS (the tunnel) — browsers still accept them on http://localhost
@@ -48,4 +53,4 @@ services:
     command: tunnel --no-autoupdate --protocol ${TUNNEL_PROTOCOL:-auto} --url http://app:8000
 
 volumes:
-  pgdata:
+  mysqldata:

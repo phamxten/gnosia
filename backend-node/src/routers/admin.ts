@@ -1,7 +1,7 @@
 /* Admin: curriculum dashboard with data-driven content flags, people, and the Builder API. */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
-import { all, asc, type Db, desc, eq, first, get as getRow, insert, isIn, save, sql, T, where } from '../db.ts';
+import { all, asc, count, type Db, desc, eq, first, get as getRow, gt, insert, isIn, isNotNull, isNull, save, sql, T, where } from '../db.ts';
 import { dict, fail, int, model, oneOf, optional, params, str } from '../http.ts';
 import { deepEqual, first as firstWord, get, isInt, type Json, or, roundHalfEven, toStr, repr, sortBy, truthy } from '../util.ts';
 import type { Chapter, User } from '../schema.ts';
@@ -39,7 +39,7 @@ async function overview(db: Db, me: User): Promise<Json> {
   const spark: number[] = [];
   for (let i = 0; i < 8; i++) {
     const d = activity.addDays(today, -(7 - i));
-    spark.push((await db.q.select({ n: sql<number>`count(*)::int` }).from(T.daily_activity).where(where(eq(T.daily_activity.day, d), sql`${T.daily_activity.seconds} > 0`)))[0].n);
+    spark.push(await count(db, T.daily_activity, where(eq(T.daily_activity.day, d), gt(T.daily_activity.seconds, 0))));
   }
   const weekAgo = Date.now() - 7 * DAY_MS;
   const active = learners.filter(u => u.last_active_at && u.last_active_at.getTime() >= weekAgo).length;
@@ -52,10 +52,10 @@ async function overview(db: Db, me: User): Promise<Json> {
     if (!firstRounds.has(k)) firstRounds.set(k, r);
   }
   const gate = firstRounds.size ? roundHalfEven((100 * [...firstRounds.values()].filter(r => r.passed).length) / firstRounds.size) : 0;
-  const done = await all(db, T.chapter_progress, where(sql`${T.chapter_progress.completed_at} is not null`, sql`${T.chapter_progress.active_seconds} > 0`));
+  const done = await all(db, T.chapter_progress, where(isNotNull(T.chapter_progress.completed_at), gt(T.chapter_progress.active_seconds, 0)));
   const avgMin = done.length ? roundHalfEven(done.reduce((a, p) => a + p.active_seconds, 0) / done.length / 60) : 0;
   const dist: Record<string, number> = Object.fromEntries(unlock.PHASES.map(p => [p, 0]));
-  for (const p of await all(db, T.chapter_progress, where(sql`${T.chapter_progress.completed_at} is null`, isIn(T.chapter_progress.user_id, ids))))
+  for (const p of await all(db, T.chapter_progress, where(isNull(T.chapter_progress.completed_at), isIn(T.chapter_progress.user_id, ids))))
     dist[unlock.currentPhase(p.phases)] += 1;
   let itemsTotal = 0;
   for (const c of published) {
@@ -95,7 +95,7 @@ async function itemStats(db: Db, chapterId: number, phase: string): Promise<Stat
 
 async function contentFlags(db: Db, limit = 6): Promise<Json[]> {
   const flags: Json[] = [];
-  for (const ch of await all(db, T.chapters, sql`${T.chapters.version} > 0`)) {
+  for (const ch of await all(db, T.chapters, gt(T.chapters.version, 0))) {
     const content = or(await content_svc.published(db, ch), {});
     const items: Json[] = get(get(content, 'perkuat', {}), 'items', []);
     // Perkuat: first-try wrong % far above the chapter average
@@ -149,9 +149,10 @@ async function contentFlags(db: Db, limit = 6): Promise<Json[]> {
       }
     }
     // Challenge: learner reports on a test
-    const reports = await db.q.select({ item_id: T.content_reports.item_id, n: sql<number>`count(*)::int` }).from(T.content_reports)
+    const reports = await db.q.select({ item_id: T.content_reports.item_id, n: sql<number>`count(*)` }).from(T.content_reports)
       .where(eq(T.content_reports.chapter_id, ch.id)).groupBy(T.content_reports.item_id);
-    for (const { item_id, n } of reports) {
+    for (const { item_id, n: rawN } of reports) {
+      const n = Number(rawN);
       if (n >= 3) {
         const tests: Json[] = get(or(get(content, 'challenge'), {}), 'tests', []);
         const idx = tests.findIndex(t => t.id === item_id);
@@ -369,9 +370,9 @@ export default function admin(app: FastifyInstance) {
     const me = await adminOnly(req, db);
     const body = req.body as { title: string; subtitle: string; icon: string };
     const path = (await firstPath(db))!;
-    const agg = (await db.q.select({ pos: sql<number>`coalesce(max(${T.chapters.position}), 0)::int`, num: sql<number>`coalesce(max(${T.chapters.number}), 0)::int` })
+    const agg = (await db.q.select({ pos: sql<number>`coalesce(max(${T.chapters.position}), 0)`, num: sql<number>`coalesce(max(${T.chapters.number}), 0)` })
       .from(T.chapters).where(eq(T.chapters.path_id, path.id)))[0];
-    const last = agg.pos, num = agg.num + 1;
+    const last = Number(agg.pos), num = Number(agg.num) + 1;
     let slug = body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `bab-${num}`;
     while (await first(db, T.chapters, where(eq(T.chapters.path_id, path.id), eq(T.chapters.slug, slug)))) slug += '-baru';
     const ch = await insert(db, T.chapters, {

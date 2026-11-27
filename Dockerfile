@@ -27,8 +27,8 @@ COPY --from=api /src/backend-node/dist ./dist
 COPY --from=api /src/backend-node/runner ./runner
 COPY --from=web /src/frontend/dist /app/frontend/dist
 
-# run as an unprivileged user (the embedded database, used only without GNOSIA_DATABASE_URL, lives in ./data)
-RUN mkdir -p data && chown -R node:node /app
+# run as an unprivileged user
+RUN chown -R node:node /app
 USER node
 
 EXPOSE 8000

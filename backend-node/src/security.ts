@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import jwt from 'jsonwebtoken';
 
@@ -9,16 +9,27 @@ import type { User } from './schema.ts';
 
 const ALGO = 'HS256';
 
-// bcrypt only reads the first 72 bytes: cut there explicitly so every bcrypt implementation agrees on the same hash.
-const bytes = (pw: string) => Buffer.from(pw, 'utf8').subarray(0, 72);
+// bcrypt only reads the first 72 bytes: cut cleanly on UTF-8 character boundaries so every bcrypt implementation agrees.
+function trunc72(pw: string): string {
+  if (Buffer.byteLength(pw, 'utf8') <= 72) return pw;
+  let out = '';
+  let used = 0;
+  for (const ch of pw) {
+    const b = Buffer.byteLength(ch, 'utf8');
+    if (used + b > 72) break;
+    out += ch;
+    used += b;
+  }
+  return out;
+}
 
 export async function hashPassword(pw: string): Promise<string> {
-  return bcrypt.hash(bytes(pw), 12);
+  return bcrypt.hash(trunc72(pw), 10);
 }
 
 export async function verifyPassword(pw: string, hashed: string): Promise<boolean> {
   try {
-    return await bcrypt.compare(bytes(pw), hashed);
+    return await bcrypt.compare(trunc72(pw), hashed);
   } catch {
     return false;
   }

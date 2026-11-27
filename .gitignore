@@ -1,12 +1,10 @@
 # secrets & local data
 .env
-backend/.env
-backend/*.db
-backend/*.db-wal
-backend/*.db-shm
-__pycache__/
+backend-node/.env
+node_modules/
 frontend/node_modules/
 frontend/dist/
+gnosia-hostinger.zip
 
 # editor / tools
 .claude/

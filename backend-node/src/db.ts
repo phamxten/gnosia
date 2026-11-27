@@ -1,119 +1,122 @@
-/* Database access. PostgreSQL when GNOSIA_DATABASE_URL is a postgres URL, otherwise PGlite
-   (Postgres compiled to WebAssembly, stored in backend-node/data) so development needs no server.
+/* Database access via MySQL / MariaDB (mysql2 + Drizzle ORM).
 
-   Every request gets one connection inside a transaction: `db.commit()` makes the work so far permanent and starts a new transaction, and
-   whatever is not committed when the request ends (or fails) is rolled back. */
-import { mkdirSync, readFileSync } from 'node:fs';
+   Every request gets one pooled connection inside a transaction: `db.commit()` makes the work so far
+   permanent and starts a new transaction, and whatever is not committed when the request ends (or fails)
+   is rolled back. */
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { PGlite } from '@electric-sql/pglite';
-import { and, asc, desc, eq, getTableName, inArray, is, ne, sql, type SQL } from 'drizzle-orm';
-import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
-import { drizzle as drizzleLite } from 'drizzle-orm/pglite';
-import { PgTable, type PgColumn, type PgDatabase, type PgTableWithColumns } from 'drizzle-orm/pg-core';
-import pg from 'pg';
+import { and, asc, desc, eq, getTableName, gt, gte, inArray, is, isNotNull, isNull, lt, lte, ne, sql, type SQL } from 'drizzle-orm';
+import { MySqlTable, type MySqlColumn, type MySqlTableWithColumns } from 'drizzle-orm/mysql-core';
+import { drizzle as drizzleMysql, type MySql2Database } from 'drizzle-orm/mysql2';
+import mysql from 'mysql2/promise';
 
 import { settings } from './config.ts';
 import * as schema from './schema.ts';
 
-export { and, asc, desc, eq, ne, sql };
+export { and, asc, desc, eq, gt, gte, isNotNull, isNull, lt, lte, ne, sql };
 export const T = schema;
 
-type Q = PgDatabase<any, typeof schema>;
-type Conn = { q: Q; exec(sql: string): Promise<unknown>; release(broken?: boolean): void };
+type Q = MySql2Database<typeof schema>;
 
-let pool: pg.Pool | null = null;
-let lite: PGlite | null = null;
-let liteQueue: Promise<void> = Promise.resolve();
+let pool: mysql.Pool | null = null;
 
-function start(): void {
-  if (pool || lite) return;
-  const url = settings.database_url;
-  if (url.startsWith('postgresql://')) {
-    pool = new pg.Pool({ connectionString: url, max: 10 });
-  } else {
-    const dir = url.startsWith('pglite://') ? url.slice('pglite://'.length) : undefined; // memory:// = in-memory
-    if (dir) mkdirSync(dir, { recursive: true });
-    lite = new PGlite(dir);
+function getPool(): mysql.Pool {
+  if (!pool) {
+    pool = mysql.createPool({
+      ...settings.db,
+      waitForConnections: true,
+      connectionLimit: settings.db_pool_size,
+      charset: 'utf8mb4',
+      timezone: 'Z',
+      dateStrings: true,
+      jsonStrings: true, // keep JSON as raw UTF-8 text on both MySQL 8 and MariaDB so schema.ts parses once
+    } as mysql.PoolOptions);
   }
-}
-
-async function connect(): Promise<Conn> {
-  start();
-  if (pool) {
-    const client = await pool.connect();
-    return { q: drizzlePg(client, { schema }) as unknown as Q, exec: s => client.query(s), release: b => client.release(b) };
-  }
-  // PGlite has a single connection: requests take turns (fine for development and tests).
-  let done!: () => void;
-  const mine = new Promise<void>(r => (done = r));
-  const prev = liteQueue;
-  liteQueue = prev.then(() => mine);
-  await prev;
-  return { q: drizzleLite(lite!, { schema }) as unknown as Q, exec: s => lite!.exec(s), release: () => done() };
+  return pool;
 }
 
 export class Db {
   /** rows fetched by id (identity map): db.get() of a row already seen costs no query */
   readonly seen = new Map<Tbl, Map<number, any>>();
-  constructor(private conn: Conn) {}
-  get q(): Q { return this.conn.q; }
-  /** raw SQL, several statements allowed (DDL) */
-  exec(sqlText: string): Promise<unknown> { return this.conn.exec(sqlText); }
+  readonly q: Q;
+  constructor(private conn: mysql.PoolConnection) {
+    this.q = drizzleMysql(conn, { schema, mode: 'default' }) as unknown as Q;
+  }
   async commit(): Promise<void> {
-    await this.conn.exec('COMMIT');
-    await this.conn.exec('BEGIN');
+    await this.conn.commit();
+    await this.conn.beginTransaction();
   }
 }
 
 /** Runs `fn` in a transaction that is rolled back unless `fn` committed. */
 export async function withDb<R>(fn: (db: Db) => Promise<R>): Promise<R> {
-  const conn = await connect();
+  const conn = await getPool().getConnection();
   let broken = false;
   try {
-    await conn.exec('BEGIN');
+    await conn.beginTransaction();
     return await fn(new Db(conn));
   } finally {
-    try { await conn.exec('ROLLBACK'); } catch { broken = true; }
-    conn.release(broken);
+    try {
+      await conn.rollback();
+    } catch {
+      broken = true;
+    }
+    if (broken) conn.destroy();
+    else conn.release();
   }
 }
 
 const SCHEMA_SQL = join(dirname(fileURLToPath(import.meta.url)), 'schema.sql');
-const TABLES = Object.values(schema).filter(t => is(t, PgTable)) as unknown as PgTableWithColumns<any>[];
+const TABLES = Object.values(schema).filter(t => is(t, MySqlTable)) as unknown as MySqlTableWithColumns<any>[];
 
-/** Creates the tables when the database is empty. */
-export async function initDb(): Promise<void> {
-  await withDb(async db => {
-    const rows = await db.q.execute(sql`select to_regclass('public.users') as t`);
-    const found = (rows as any).rows?.[0]?.t ?? (rows as any)[0]?.t;
-    if (!found) {
-      await db.exec(readFileSync(SCHEMA_SQL, 'utf8'));
-      await db.commit();
-    }
-  });
+function splitStatements(sqlText: string): string[] {
+  return sqlText
+    .split(';')
+    .map(s => s.trim())
+    .filter(Boolean);
 }
 
-/** Drops every table (CASCADE handles the users <-> classes foreign-key cycle). */
+/** Creates the tables when the database is empty. (DDL causes an implicit commit in MySQL, so run outside withDb.) */
+export async function initDb(): Promise<void> {
+  const p = getPool();
+  const [rows] = await p.query<mysql.RowDataPacket[]>(
+    'SELECT 1 AS ok FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1',
+    ['users'],
+  );
+  if (!rows.length) {
+    const ddl = readFileSync(SCHEMA_SQL, 'utf8');
+    const conn = await p.getConnection();
+    try {
+      for (const stmt of splitStatements(ddl)) await conn.query(stmt);
+    } finally {
+      conn.release();
+    }
+  }
+}
+
+/** Drops every table (FOREIGN_KEY_CHECKS = 0 handles the users <-> classes foreign-key cycle). */
 export async function dropAll(): Promise<void> {
-  await withDb(async db => {
-    for (const t of TABLES) await db.exec(`DROP TABLE IF EXISTS "${getTableName(t)}" CASCADE`);
-    await db.commit();
-  });
+  const conn = await getPool().getConnection();
+  try {
+    await conn.query('SET FOREIGN_KEY_CHECKS = 0');
+    for (const t of TABLES) await conn.query(`DROP TABLE IF EXISTS \`${getTableName(t)}\``);
+    await conn.query('SET FOREIGN_KEY_CHECKS = 1');
+  } finally {
+    conn.release();
+  }
 }
 
 export async function closeDb(): Promise<void> {
-  await liteQueue;
   await pool?.end();
-  await lite?.close();
-  pool = lite = null;
+  pool = null;
 }
 
 // ------------------------------------------------------------------ helpers
-type Tbl = PgTableWithColumns<any>;
+type Tbl = MySqlTableWithColumns<any>;
 type Row<TT extends Tbl> = TT['$inferSelect'];
-type Order = SQL | PgColumn;
+type Order = SQL | MySqlColumn;
 
 /** db.get(Model, id) */
 export async function get<TT extends Tbl>(db: Db, t: TT, id: number | null | undefined): Promise<Row<TT> | undefined> {
@@ -127,26 +130,26 @@ export async function get<TT extends Tbl>(db: Db, t: TT, id: number | null | und
 }
 
 /** db.scalars(select(Model).where(...).order_by(...)); rows come in id order unless told otherwise */
-export async function all<TT extends Tbl>(db: Db, t: TT, where?: SQL, ...order: Order[]): Promise<Row<TT>[]> {
-  const q = db.q.select().from(t as any).where(where).orderBy(...(order.length ? order : [asc(t.id)]));
+export async function all<TT extends Tbl>(db: Db, t: TT, whereCond?: SQL, ...order: Order[]): Promise<Row<TT>[]> {
+  const q = db.q.select().from(t as any).where(whereCond).orderBy(...(order.length ? order : [asc(t.id)]));
   return (await q) as Row<TT>[];
 }
 
 /** db.scalar(select(Model).where(...).order_by(...)) */
-export async function first<TT extends Tbl>(db: Db, t: TT, where?: SQL, ...order: Order[]): Promise<Row<TT> | undefined> {
-  const q = db.q.select().from(t as any).where(where).orderBy(...(order.length ? order : [asc(t.id)])).limit(1);
+export async function first<TT extends Tbl>(db: Db, t: TT, whereCond?: SQL, ...order: Order[]): Promise<Row<TT> | undefined> {
+  const q = db.q.select().from(t as any).where(whereCond).orderBy(...(order.length ? order : [asc(t.id)])).limit(1);
   return ((await q) as Row<TT>[])[0];
 }
 
-export async function count<TT extends Tbl>(db: Db, t: TT, where?: SQL): Promise<number> {
-  const [r] = await db.q.select({ n: sql<number>`count(*)::int` }).from(t as any).where(where);
+export async function count<TT extends Tbl>(db: Db, t: TT, whereCond?: SQL): Promise<number> {
+  const [r] = await db.q.select({ n: sql<number>`count(*)` }).from(t as any).where(whereCond);
   return Number((r as any)?.n ?? 0);
 }
 
-/** db.add(Model(...)) + flush: returns the stored row with its id and defaults */
+/** db.add(Model(...)) + flush: inserts the row, reads it back by insertId, and caches it in the identity map */
 export async function insert<TT extends Tbl>(db: Db, t: TT, values: Partial<Row<TT>>): Promise<Row<TT>> {
-  const [r] = await db.q.insert(t as any).values(values as any).returning();
-  return r as Row<TT>;
+  const [{ id }] = await db.q.insert(t as any).values(values as any).$returningId();
+  return (await get(db, t, id))!;
 }
 
 /** obj.field = value for each field, written through right away */
@@ -164,7 +167,7 @@ export async function remove<TT extends Tbl>(db: Db, t: TT, id: number): Promise
 }
 
 /** col IN (...) that is simply false for an empty list */
-export function isIn(col: PgColumn, values: readonly (number | string)[]): SQL {
+export function isIn(col: MySqlColumn, values: readonly (number | string)[]): SQL {
   return values.length ? inArray(col, [...values]) : sql`false`;
 }
 
